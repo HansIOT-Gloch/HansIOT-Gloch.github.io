@@ -15,8 +15,9 @@
             text-align: center;
         }
         .container {
-            max-width: 800px;
+            max-width: 100%;
             margin: auto;
+            padding: 10px;
         }
         .schedule-table {
             width: 100%;
@@ -33,17 +34,20 @@
         }
         .day-buttons {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             margin-bottom: 20px;
         }
         .day-buttons button {
             margin: 5px;
-            padding: 10px 20px;
+            padding: 10px;
             background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
             border-radius: 5px;
+            width: 45%;
+            font-size: 14px;
         }
         .day-buttons button:hover {
             background-color: #0056b3;
@@ -54,12 +58,37 @@
             font-size: 18px;
             font-weight: bold;
         }
+        .running-text {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 0;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .running-text span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scroll 15s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        @media (max-width: 768px) {
+            .day-buttons button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Jadwal XII TJKT</h1>
-        
+
         <div class="day-buttons">
             <button onclick="showSchedule('monday')">Senin</button>
             <button onclick="showSchedule('tuesday')">Selasa</button>
@@ -67,7 +96,6 @@
             <button onclick="showSchedule('thursday')">Kamis</button>
             <button onclick="showSchedule('friday')">Jumat</button>
             <button onclick="showTodaySchedule()">Jadwal Hari Ini</button>
-            <button onclick="showOngoingClass()">Pelajaran yang Sedang Berlangsung</button>
         </div>
 
         <table class="schedule-table" id="schedule">
@@ -84,6 +112,10 @@
         </table>
 
         <div id="ongoing-class"></div>
+
+        <div class="running-text">
+            <span id="runningText">Memuat informasi...</span>
+        </div>
     </div>
 
     <script>
@@ -143,39 +175,42 @@
             }
         }
 
-        function showOngoingClass() {
+        function updateRunningText() {
             const now = new Date();
             const hours = now.getHours();
             const minutes = now.getMinutes();
-            const ongoing = document.getElementById('ongoing-class');
-            
-            const day = new Date().getDay(); // Sunday = 0, Monday = 1, etc.
+            const day = now.getDay();
             const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-            if (day < 1 || day > 5) {
-                ongoing.textContent = 'Tidak ada pelajaran berlangsung';
-                return;
-            }
+            const runningText = document.getElementById('runningText');
 
-            const currentDay = schedule[dayMapping[day]];
-            let ongoingClass = 'Tidak ada pelajaran berlangsung';
-
-            currentDay.forEach(item => {
-                const [start, end] = item.time.split(' - ');
-                const [startH, startM] = start.split(':').map(Number);
-                const [endH, endM] = end.split(':').map(Number);
-                const startTime = new Date(now);
-                startTime.setHours(startH, startM, 0, 0);
-                const endTime = new Date(now);
-                endTime.setHours(endH, endM, 0, 0);
-
-                if (now >= startTime && now <= endTime) {
-                    ongoingClass = `Pelajaran: ${item.subject}, Guru: ${item.teacher}`;
+            // Conditions for school time
+            if (hours >= 14 && minutes > 30 || hours > 14) {
+                runningText.textContent = 'Sekarang sudah lewat jam pulang, sekolah sudah selesai.';
+            } else if (hours < 7) {
+                runningText.textContent = 'Sekolah belum mulai, akan mulai jam 7:00 pagi.';
+            } else if (day >= 1 && day <= 5) {
+                const todaySchedule = schedule[dayMapping[day]];
+                for (let i = 0; i < todaySchedule.length; i++) {
+                    const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
+                    const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
+                    if (
+                        (hours > startHour || (hours === startHour && minutes >= startMinute)) &&
+                        (hours < endHour || (hours === endHour && minutes < endMinute))
+                    ) {
+                        runningText.textContent = `Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.`;
+                        break;
+                    } else {
+                        runningText.textContent = 'Tidak ada pelajaran yang sedang berlangsung.';
+                    }
                 }
-            });
-
-            ongoing.textContent = ongoingClass;
+            } else {
+                runningText.textContent = 'Sekarang hari libur, tidak ada jadwal sekolah.';
+            }
         }
+
+        setInterval(updateRunningText, 10000); // Update every 10 seconds
+        updateRunningText(); // Initial call
     </script>
 </body>
 </html>
