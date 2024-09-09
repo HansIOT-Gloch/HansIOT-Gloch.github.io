@@ -98,7 +98,7 @@
 
         function earnMoney() {
             let money = parseInt(localStorage.getItem('money'), 10) || 0;
-            money += 10; // Increase money by 10
+            money += 100; // Increase money by 10
             localStorage.setItem('money', money);
             document.getElementById('money').textContent = `Money: $${money}`;
         }
@@ -176,7 +176,7 @@
                 if (itemIndex >= 0) {
                     items[itemIndex].quantity += 1;
                 } else {
-                    items.push({ id: itemId, quantity: 1 });
+                    items.push({ id: itemId, quantity: 1, income: itemDefinitions.find(item => item.id === itemId).income });
                 }
                 localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
                 loadItems();
@@ -209,10 +209,16 @@
                     // Update the item
                     items[itemIndex] = { ...item, income: item.income * (itemUpgrades.level + 1) };
                     localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+
                     document.getElementById('money').textContent = `Money: $${money}`;
                     loadItems();
                 }
             }
+        }
+
+        function loadUpgrades() {
+            // Placeholder function for loading upgrades
+            // Add code here to display current upgrades and their effects
         }
 
         function checkForExistingUsername() {
@@ -226,11 +232,6 @@
                 setInterval(updateItemIncome, 1000);
                 setInterval(updateLeaderboard, 10000); // Update leaderboard every 10 seconds
             }
-        }
-
-        function loadUpgrades() {
-            // Placeholder function for loading upgrades, if any.
-            // Add code here to display current upgrades and their effects.
         }
 
         checkForExistingUsername();
