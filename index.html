@@ -1,239 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Economic Game</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Code Editor</title>
     <style>
-        #game-container {
-            display: none;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
-        .item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background-color: #fff;
+        .header {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .editor-container {
+            display: flex;
+            flex: 1;
+        }
+        .editor {
+            flex: 2;
+            padding: 10px;
+            border-right: 1px solid #ccc;
+            overflow: auto;
+        }
+        .controls {
+            flex: 1;
+            padding: 10px;
+        }
+        select, button {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+        }
+        textarea {
+            width: 100%;
+            height: calc(100vh - 120px);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        .output {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            height: 150px;
+            overflow: auto;
+            background: #f9f9f9;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen overflow-hidden">
-
-    <!-- Username Form -->
-    <div id="username-form" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-4">Enter Username</h1>
-        <input id="username" type="text" placeholder="Enter your username" class="border border-gray-300 p-2 rounded-lg w-full mb-4">
-        <button onclick="setUsername()" class="bg-blue-500 text-white p-2 rounded-lg w-full">Submit</button>
-        <p id="username-error" class="text-red-500 mt-2"></p>
+<body>
+    <div class="header">
+        <h1>Code Editor</h1>
     </div>
-
-    <!-- Game Container -->
-    <div id="game-container" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-4">Economic Game</h1>
-        <p id="money" class="text-xl mb-4">Money: $0</p>
-        <button onclick="earnMoney()" class="bg-green-500 text-white p-2 rounded-lg w-full mb-4">Earn Money</button>
-
-        <!-- Item Buying Section -->
-        <h2 class="text-xl font-semibold mb-2">Buy Items</h2>
-        <div id="items-container">
-            <!-- Items will be dynamically added here -->
+    <div class="editor-container">
+        <div class="editor">
+            <textarea id="code" placeholder="Tulis kode di sini..."></textarea>
         </div>
-
-        <!-- Upgrade Section -->
-        <h2 class="text-xl font-semibold mb-2">Upgrades</h2>
-        <div id="upgrades-container">
-            <!-- Upgrades will be dynamically added here -->
+        <div class="controls">
+            <select id="language">
+                <option value="lua">Lua</option>
+                <option value="python">Python</option>
+            </select>
+            <button id="runButton">Tampilkan Kode</button>
+            <div class="output" id="output"></div>
         </div>
-
-        <h2 class="text-xl font-semibold mb-2">Leaderboard</h2>
-        <ul id="leaderboard" class="list-disc pl-5">
-            <!-- Leaderboard will be updated here -->
-        </ul>
     </div>
 
     <script>
-        const USERNAME_KEY = 'username';
-        const LEADERBOARD_KEY = 'leaderboard';
-        const ITEMS_KEY = 'items';
-        const UPGRADES_KEY = 'upgrades';
+        document.getElementById('runButton').addEventListener('click', function() {
+            const code = document.getElementById('code').value;
+            const language = document.getElementById('language').value;
+            const outputElement = document.getElementById('output');
 
-        function setUsername() {
-            const usernameInput = document.getElementById('username');
-            const username = usernameInput.value.trim();
-            const errorElement = document.getElementById('username-error');
-
-            if (!username) {
-                errorElement.textContent = 'Username cannot be empty';
-                return;
-            }
-
-            let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
-
-            if (localStorage.getItem(USERNAME_KEY)) {
-                errorElement.textContent = 'Username already set';
-                return;
-            }
-
-            if (leaderboard.some(entry => entry.username === username)) {
-                errorElement.textContent = 'Username already taken';
-                return;
-            }
-
-            localStorage.setItem(USERNAME_KEY, username);
-            localStorage.setItem('money', 0); // Initialize money
-            localStorage.setItem(ITEMS_KEY, JSON.stringify([])); // Initialize items
-            localStorage.setItem(UPGRADES_KEY, JSON.stringify([])); // Initialize upgrades
-
-            document.getElementById('username-form').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-
-            // Start item income update
-            setInterval(updateItemIncome, 1000);
-            setInterval(updateLeaderboard, 10000); // Update leaderboard every 10 seconds
-            loadItems();
-            loadUpgrades();
-            updateLeaderboard(); // Initial load
-        }
-
-        function earnMoney() {
-            let money = parseInt(localStorage.getItem('money'), 10) || 0;
-            money += 10; // Increase money by 10
-            localStorage.setItem('money', money);
-            document.getElementById('money').textContent = `Money: $${money}`;
-        }
-
-        function updateLeaderboard() {
-            const leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
-            const username = localStorage.getItem(USERNAME_KEY);
-            const money = parseInt(localStorage.getItem('money'), 10) || 0;
-
-            // Update current user's money
-            const existingEntry = leaderboard.find(entry => entry.username === username);
-            if (existingEntry) {
-                existingEntry.money = money;
-            } else {
-                leaderboard.push({ username, money });
-            }
-
-            // Sort leaderboard by money in descending order
-            leaderboard.sort((a, b) => b.money - a.money);
-            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
-
-            // Render leaderboard
-            const leaderboardElement = document.getElementById('leaderboard');
-            leaderboardElement.innerHTML = leaderboard.map(entry =>
-                `<li>${entry.username}: $${entry.money}</li>`
-            ).join('');
-        }
-
-        function updateItemIncome() {
-            const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-            let totalIncome = 0;
-
-            items.forEach(item => {
-                totalIncome += item.income * item.quantity;
-            });
-
-            let money = parseInt(localStorage.getItem('money'), 10) || 0;
-            money += totalIncome;
-            localStorage.setItem('money', money);
-            document.getElementById('money').textContent = `Money: $${money}`;
-        }
-
-        function loadItems() {
-            const itemsContainer = document.getElementById('items-container');
-            const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-
-            const itemDefinitions = [
-                { id: 'item1', name: 'Basic Farm', cost: 50, income: 1 },
-                { id: 'item2', name: 'Advanced Farm', cost: 200, income: 5 }
-            ];
-
-            itemsContainer.innerHTML = itemDefinitions.map(def => {
-                const ownedItem = items.find(item => item.id === def.id) || { quantity: 0 };
-                return `
-                    <div class="item">
-                        <h3 class="text-lg font-semibold">${def.name}</h3>
-                        <p>Cost: $${def.cost}</p>
-                        <p>Income: $${def.income}/s</p>
-                        <p>Owned: ${ownedItem.quantity}</p>
-                        <button onclick="buyItem('${def.id}', ${def.cost})" class="bg-blue-500 text-white p-2 rounded-lg mt-2">Buy</button>
-                        <button onclick="upgradeItem('${def.id}')" class="bg-green-500 text-white p-2 rounded-lg mt-2">Upgrade</button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function buyItem(itemId, cost) {
-            let money = parseInt(localStorage.getItem('money'), 10) || 0;
-            if (money >= cost) {
-                money -= cost;
-                localStorage.setItem('money', money);
-
-                let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-                const itemIndex = items.findIndex(item => item.id === itemId);
-                if (itemIndex >= 0) {
-                    items[itemIndex].quantity += 1;
-                } else {
-                    const itemDefinitions = [
-                        { id: 'item1', name: 'Basic Farm', cost: 50, income: 1 },
-                        { id: 'item2', name: 'Advanced Farm', cost: 200, income: 5 }
-                    ];
-                    const itemDef = itemDefinitions.find(def => def.id === itemId);
-                    items.push({ id: itemId, quantity: 1, income: itemDef.income });
-                }
-                localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-                loadItems();
-                document.getElementById('money').textContent = `Money: $${money}`;
-            }
-        }
-
-        function upgradeItem(itemId) {
-            let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-            let upgrades = JSON.parse(localStorage.getItem(UPGRADES_KEY)) || [];
-
-            const itemIndex = items.findIndex(item => item.id === itemId);
-            if (itemIndex >= 0) {
-                const item = items[itemIndex];
-                const itemUpgrades = upgrades.find(upgrade => upgrade.id === itemId) || { level: 0 };
-
-                // Each upgrade level increases the income multiplier by 2
-                const upgradeCost = 100 * (itemUpgrades.level + 1);
-                let money = parseInt(localStorage.getItem('money'), 10) || 0;
-
-                if (money >= upgradeCost) {
-                    money -= upgradeCost;
-                    localStorage.setItem('money', money);
-
-                    itemUpgrades.level += 1;
-                    upgrades = upgrades.filter(upgrade => upgrade.id !== itemId);
-                    upgrades.push(itemUpgrades);
-                    localStorage.setItem(UPGRADES_KEY, JSON.stringify(upgrades));
-
-                    items[itemIndex].income = (items[itemIndex].income * itemUpgrades.level);
-                    localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-                    document.getElementById('money').textContent = `Money: $${money}`;
-                    loadItems();
-                }
-            }
-        }
-
-        // Initialize game if username exists
-        function checkForExistingUsername() {
-            const username = localStorage.getItem(USERNAME_KEY);
-            if (username) {
-                document.getElementById('username-form').style.display = 'none';
-                document.getElementById('game-container').style.display = 'block';
-                loadItems();
-                loadUpgrades();
-                updateLeaderboard(); // Ensure leaderboard is updated
-                setInterval(updateItemIncome, 1000);
-                setInterval(updateLeaderboard, 10000); // Update leaderboard every 10 seconds
-            }
-        }
-
-        checkForExistingUsername();
+            // Menampilkan kode di output
+            outputElement.innerHTML = `<strong>Bahasa:</strong> ${language}<br><br><strong>Kode:</strong><br><pre>${code}</pre>`;
+        });
     </script>
 </body>
 </html>
