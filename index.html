@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Editor</title>
+    <title>Web Creator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,70 +19,61 @@
             padding: 10px;
             text-align: center;
         }
-        .editor-container {
-            display: flex;
-            flex: 1;
+        .container {
+            padding: 20px;
         }
-        .editor {
-            flex: 2;
-            padding: 10px;
-            border-right: 1px solid #ccc;
-            overflow: auto;
-        }
-        .controls {
-            flex: 1;
-            padding: 10px;
-        }
-        select, button {
+        input, textarea, button {
             display: block;
             margin: 10px 0;
             width: 100%;
         }
         textarea {
-            width: 100%;
-            height: calc(100vh - 120px);
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 10px;
+            height: 150px;
             font-family: monospace;
-            box-sizing: border-box;
         }
         .output {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 10px;
-            height: 150px;
-            overflow: auto;
-            background: #f9f9f9;
+            margin-top: 20px;
+        }
+        .link {
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Code Editor</h1>
+        <h1>Web Creator</h1>
     </div>
-    <div class="editor-container">
-        <div class="editor">
-            <textarea id="code" placeholder="Tulis kode di sini..."></textarea>
-        </div>
-        <div class="controls">
-            <select id="language">
-                <option value="lua">Lua</option>
-                <option value="python">Python</option>
-            </select>
-            <button id="runButton">Tampilkan Kode</button>
-            <div class="output" id="output"></div>
-        </div>
+    <div class="container">
+        <input type="text" id="siteName" placeholder="Masukkan nama situs web">
+        <textarea id="indexHtml" placeholder="Tulis kode HTML..."></textarea>
+        <textarea id="styleCss" placeholder="Tulis kode CSS..."></textarea>
+        <button id="saveButton">Simpan dan Tampilkan</button>
+        <div class="output" id="output"></div>
     </div>
 
     <script>
-        document.getElementById('runButton').addEventListener('click', function() {
-            const code = document.getElementById('code').value;
-            const language = document.getElementById('language').value;
-            const outputElement = document.getElementById('output');
+        document.getElementById('saveButton').addEventListener('click', function() {
+            const siteName = document.getElementById('siteName').value.trim();
+            const indexHtml = document.getElementById('indexHtml').value;
+            const styleCss = document.getElementById('styleCss').value;
 
-            // Menampilkan kode di output
-            outputElement.innerHTML = `<strong>Bahasa:</strong> ${language}<br><br><strong>Kode:</strong><br><pre>${code}</pre>`;
+            if (!siteName) {
+                alert('Masukkan nama situs web!');
+                return;
+            }
+
+            // Simpan file di localStorage
+            localStorage.setItem(`${siteName}_index.html`, indexHtml);
+            localStorage.setItem(`${siteName}_style.css`, styleCss);
+
+            // Tampilkan URL untuk preview
+            const previewUrl = `https://hansiot-gloch.github.io/${siteName}/index.html`;
+            const outputElement = document.getElementById('output');
+            outputElement.innerHTML = `
+                <p>Situs web Anda telah disimpan!</p>
+                <p>URL Preview:</p>
+                <a href="${previewUrl}" class="link" target="_blank">${previewUrl}</a>
+            `;
         });
     </script>
 </body>
