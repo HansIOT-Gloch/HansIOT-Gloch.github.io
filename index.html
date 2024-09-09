@@ -1,137 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal Sekolah</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jadwal Pelajaran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        #schedule-container {
-            display: none;
-            padding: 20px;
-        }
-        .day-schedule {
-            margin-bottom: 30px;
-        }
-        .day-schedule h2 {
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        #loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-            font-size: 24px;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
         }
     </style>
 </head>
-<body>
-    <div id="loading">Loading...</div>
-    <div id="schedule-container">
-        <div class="day-schedule">
-            <h2>Senin</h2>
-            <table>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Mata Pelajaran</th>
-                    <th>Guru</th>
-                </tr>
-                <tr><td>7:00 - 7:50</td><td>Matematika</td><td>Nita Rusdianita, S.Pd</td></tr>
-                <tr><td>7:50 - 8:30</td><td>Pendidikan Pancasila</td><td>Sugiono, S.Pd</td></tr>
-                <tr><td>8:30 - 9:10</td><td>Teknologi Jaringan Kabel</td><td>Indra Gunawan, S.Kom</td></tr>
-                <tr><td>9:20 - 10:00</td><td>Teknologi Nirkabel</td><td>Indra Gunawan, S.Kom</td></tr>
-                <tr><td>10:00 - 10:45</td><td>Bimbingan Konseling</td><td>Winarsih, S.Pd, MM</td></tr>
-                <tr><td>10:45 - 11:15</td><td>Pendidikan Agama</td><td>C / T / S / K</td></tr>
-            </table>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Container for the entire schedule -->
+    <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-4xl relative">
+
+        <!-- Digital Clock at the top-right corner -->
+        <div id="digitalClock" class="absolute top-4 right-4 text-xl md:text-2xl text-white bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 rounded-lg shadow-md animate-pulse">
+            <!-- Time will be inserted here via JavaScript -->
         </div>
 
-        <div class="day-schedule">
-            <h2>Selasa</h2>
-            <table>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Mata Pelajaran</th>
-                    <th>Guru</th>
-                </tr>
-                <tr><td>7:00 - 7:50</td><td>Bahasa Inggris</td><td>Donna Morfini, S.Pd, M.Ikom</td></tr>
-                <tr><td>7:50 - 8:30</td><td>Bahasa Indonesia</td><td>Setyorini P, M.Pd</td></tr>
-                <tr><td>8:30 - 9:10</td><td>Pemasangan Perangkat</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>9:20 - 10:00</td><td>Konfigurasi Perangkat</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>10:00 - 10:45</td><td>Teknologi Jaringan</td><td>Indra Gunawan, S.Kom</td></tr>
-            </table>
+        <!-- Title -->
+        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Jadwal Pelajaran</h1>
+
+        <!-- Running Text -->
+        <div id="runningText" class="bg-blue-500 text-white text-center py-2 mb-4 rounded-md font-semibold text-lg"></div>
+
+        <!-- Buttons for each day -->
+        <div class="flex flex-wrap justify-around gap-4 mb-6">
+            <button id="mondayBtn" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out">Senin</button>
+            <button id="tuesdayBtn" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out">Selasa</button>
+            <button id="wednesdayBtn" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out">Rabu</button>
+            <button id="thursdayBtn" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out">Kamis</button>
+            <button id="fridayBtn" class="bg-blue-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out">Jumat</button>
+            <button id="todayScheduleBtn" class="bg-green-500 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition duration-300 ease-in-out">Jadwal Hari Ini</button>
         </div>
 
-        <div class="day-schedule">
-            <h2>Rabu</h2>
-            <table>
+        <!-- Table for displaying the schedule -->
+        <table class="w-full text-left border-collapse">
+            <thead>
                 <tr>
-                    <th>Waktu</th>
-                    <th>Mata Pelajaran</th>
-                    <th>Guru</th>
+                    <th class="border-b py-2">Waktu</th>
+                    <th class="border-b py-2">Mata Pelajaran</th>
+                    <th class="border-b py-2">Guru</th>
                 </tr>
-                <tr><td>7:00 - 7:50</td><td>Kewirausahaan</td><td>Danwayanah, S.S</td></tr>
-                <tr><td>7:50 - 8:30</td><td>Bahasa Inggris</td><td>Donna Morfini, S.Pd, M.Ikom</td></tr>
-                <tr><td>8:30 - 9:10</td><td>Sistem Jaringan</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>9:20 - 10:00</td><td>Keamanan Jaringan</td><td>Encep Andi, S.T</td></tr>
-            </table>
-        </div>
-
-        <div class="day-schedule">
-            <h2>Kamis</h2>
-            <table>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Mata Pelajaran</th>
-                    <th>Guru</th>
-                </tr>
-                <tr><td>7:00 - 7:50</td><td>Kewirausahaan</td><td>Danwayanah, S.S</td></tr>
-                <tr><td>7:50 - 8:30</td><td>Konfigurasi Perangkat</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>8:30 - 9:10</td><td>Sistem Jaringan</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>9:20 - 10:00</td><td>Perencanaan Jaringan</td><td>Encep Andi, S.T</td></tr>
-            </table>
-        </div>
-
-        <div class="day-schedule">
-            <h2>Jumat</h2>
-            <table>
-                <tr>
-                    <th>Waktu</th>
-                    <th>Mata Pelajaran</th>
-                    <th>Guru</th>
-                </tr>
-                <tr><td>7:00 - 7:50</td><td>Perencanaan Jaringan</td><td>Encep Andi, S.T</td></tr>
-                <tr><td>7:50 - 8:30</td><td>Bahasa Mandarin</td><td>Loose Nicholas</td></tr>
-                <tr><td>8:30 - 9:10</td><td>Budi Pekerti</td><td>Winarsih, S.Pd, MM</td></tr>
-            </table>
-        </div>
+            </thead>
+            <tbody id="scheduleTableBody">
+                <!-- Schedule data will be inserted here via JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <script>
-        // Simulasi loading selama 0.8 detik
-        window.onload = function() {
-            setTimeout(function() {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('schedule-container').style.display = 'block';
-            }, 800); // 0.8 detik
+        // Function to update digital clock
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds} WIB`;
+
+            document.getElementById('digitalClock').textContent = timeString;
         }
+
+        // Update the clock every second
+        setInterval(updateClock, 1000);
+        updateClock(); // Initial call to set the clock immediately
+
+        // Example schedule data
+        const schedule = {
+            senin: [
+                { time: '07:00 - 08:30', subject: 'Matematika', teacher: 'Bu Sari' },
+                { time: '08:30 - 10:00', subject: 'Bahasa Indonesia', teacher: 'Pak Budi' },
+                { time: '10:00 - 11:30', subject: 'IPA', teacher: 'Bu Maya' }
+            ],
+            selasa: [
+                { time: '07:00 - 08:30', subject: 'IPS', teacher: 'Pak Amir' },
+                { time: '08:30 - 10:00', subject: 'Bahasa Inggris', teacher: 'Bu Tika' },
+                { time: '10:00 - 11:30', subject: 'Olahraga', teacher: 'Pak Rio' }
+            ],
+            rabu: [
+                { time: '7:00 - 7:50', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
+                { time: '7:50 - 8:30', subject: 'Bahasa Inggris', teacher: 'Donna Morfini, S.Pd, M.Ikom' },
+                { time: '8:30 - 9:10', subject: 'Sistem Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '9:20 - 10:00', subject: 'Keamanan Jaringan', teacher: 'Encep Andi, S.T' },
+            ],
+            kamis: [
+                { time: '7:00 - 7:50', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
+                { time: '7:50 - 8:30', subject: 'Konfigurasi Perangkat', teacher: 'Encep Andi, S.T' },
+                { time: '8:30 - 9:10', subject: 'Sistem Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '9:20 - 10:00', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
+            ],
+            jumat: [
+                { time: '7:00 - 7:50', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '7:50 - 8:30', subject: 'Bahasa Mandarin', teacher: 'Loose Nicholas' },
+                { time: '8:30 - 9:10', subject: 'Budi Pekerti', teacher: 'Winarsih, S.Pd, MM' },
+            ]
+        };
+
+        const dayMapping = {
+            1: 'senin',
+            2: 'selasa',
+            3: 'rabu',
+            4: 'kamis',
+            5: 'jumat'
+        };
+
+        // Function to display schedule based on the selected day
+        function displaySchedule(day) {
+            const tbody = document.getElementById('scheduleTableBody');
+            tbody.innerHTML = ''; // Clear previous schedule
+
+            const daySchedule = schedule[day];
+            if (daySchedule) {
+                daySchedule.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="border-t py-2">${item.time}</td>
+                        <td class="border-t py-2">${item.subject}</td>
+                        <td class="border-t py-2">${item.teacher}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // Event listeners for buttons
+        document.getElementById('mondayBtn').addEventListener('click', () => displaySchedule('senin'));
+        document.getElementById('tuesdayBtn').addEventListener('click', () => displaySchedule('selasa'));
+        // Add event listeners for other buttons...
+
+        // Show schedule for today automatically
+        document.getElementById('todayScheduleBtn').addEventListener('click', () => {
+            const now = new Date();
+            const day = now.getDay();
+            const today = dayMapping[day];
+            if (today) displaySchedule(today);
+        });
+
+        // Function to update running text
+        function updateRunningText() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const day = now.getDay();
+
+            const runningText = document.getElementById('runningText');
+
+            if (hours >= 14 && minutes >= 30) {
+                runningText.textContent = 'Sekarang sudah lewat jam pulang, sekolah sudah selesai.';
+            } else if (hours < 7) {
+                runningText.textContent = 'Sekolah belum mulai, akan mulai jam 7:00 pagi.';
+            } else if (day >= 1 && day <= 5) {
+                const todaySchedule = schedule[dayMapping[day]];
+                for (let i = 0; i < todaySchedule.length; i++) {
+                    const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
+                    const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
+                    if (
+                        (hours > startHour || (hours === startHour && minutes >= startMinute)) &&
+                        (hours < endHour || (hours === endHour && minutes < endMinute))
+                    ) {
+                        runningText.textContent = `Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.`;
+                        break;
+                    } else {
+                        runningText.textContent = 'Tidak ada pelajaran yang sedang berlangsung.';
+                    }
+                }
+            } else {
+                runningText.textContent = 'Sekarang hari libur, tidak ada jadwal sekolah.';
+            }
+        }
+
+        setInterval(updateRunningText, 10000); // Update every 10 seconds
+        updateRunningText(); // Initial call
     </script>
 </body>
 </html>
