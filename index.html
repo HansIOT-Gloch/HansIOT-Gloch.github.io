@@ -10,6 +10,7 @@
             margin: 20px;
             padding: 0;
             background-color: #f4f4f9;
+            color: #333;
         }
         h1 {
             text-align: center;
@@ -31,6 +32,9 @@
         }
         .schedule-table th {
             background-color: #eee;
+        }
+        .current-class {
+            background-color: #ffeb3b;
         }
         .day-buttons {
             display: flex;
@@ -94,6 +98,13 @@
             font-size: 18px;
             z-index: 999;
         }
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+        .dark-mode #clock {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
@@ -109,6 +120,7 @@
             <button onclick="showSchedule('thursday')">Kamis</button>
             <button onclick="showSchedule('friday')">Jumat</button>
             <button onclick="showTodaySchedule()">Jadwal Hari Ini</button>
+            <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
         </div>
 
         <table class="schedule-table" id="schedule">
@@ -133,119 +145,123 @@
 
     <script>
         const schedule = {
-    "monday": [
-        { "time": "7:10 - 9:10", "subject": "Matematika", "teacher": "Nita Rusdianita, S.Pd" },
-        { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
-        { "time": "9:30 - 10:40", "subject": "Pendidikan Pancasila", "teacher": "Sugiono, S.Pd" },
-        { "time": "10:40 - 11:50", "subject": "Teknologi Jaringan Kabel", "teacher": "Indra Gunawan, S.Kom" },
-        { "time": "11:50 - 12:10", "subject": "Istirahat", "teacher": "" },
-        { "time": "12:10 - 13:20", "subject": "Bimbingan Konseling", "teacher": "Winarsih, S.Pd, MM" },
-        { "time": "13:20 - 14:30", "subject": "Pendidikan Agama", "teacher": "C / T / S / K" }
-    ],
-    "tuesday": [
-        { "time": "7:10 - 8:30", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
-        { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
-        { "time": "9:30 - 10:40", "subject": "Bahasa Indonesia", "teacher": "Setyorini P, M.Pd" },
-        { "time": "10:40 - 12:45", "subject": "Pemasangan Perangkat", "teacher": "Encep Andi, S.T" },
-        { "time": "12:45 - 14:30", "subject": "Teknologi Jaringan Kabel Dan Nirkabel", "teacher": "Indra Gunawan, S.Kom" }
-    ],
-    "wednesday": [
-        { "time": "7:10 - 9:10", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
-        { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
-        { "time": "9:30 - 10:40", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
-        { "time": "10:40 - 12:45", "subject": "Administrasi Sistem Jaringan", "teacher": "Encep Andi, S.T" },
-        { "time": "12:45 - 14:30", "subject": "Keamanan Jaringan", "teacher": "Encep Andi, S.T" }
-    ],
-    "thursday": [
-        { "time": "7:10 - 8:30", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
-        { "time": "8:30 - 10:40", "subject": "Konfigurasi Perangkat", "teacher": "Encep Andi, S.T" },
-        { "time": "10:40 - 12:45", "subject": "Sistem Jaringan", "teacher": "Encep Andi, S.T" },
-        { "time": "12:45 - 13:55", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
-        { "time": "13:55 - 14:30", "subject": "Budi Pekerti", "teacher": "Winarsih S.pd MM" }
-    ],
-    "friday": [
-        { "time": "7:10 - 8:30", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
-        { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
-        { "time": "9:30 - 10:50", "subject": "Bahasa Mandarin", "teacher": "Loose Nicholas" }
-    ]
-}
-
+            "monday": [
+                { "time": "7:10 - 9:10", "subject": "Matematika", "teacher": "Nita Rusdianita, S.Pd" },
+                { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
+                { "time": "9:30 - 10:40", "subject": "Pendidikan Pancasila", "teacher": "Sugiono, S.Pd" },
+                { "time": "10:40 - 11:50", "subject": "Teknologi Jaringan Kabel", "teacher": "Indra Gunawan, S.Kom" },
+                { "time": "11:50 - 12:10", "subject": "Istirahat", "teacher": "" },
+                { "time": "12:10 - 13:20", "subject": "Bimbingan Konseling", "teacher": "Winarsih, S.Pd, MM" },
+                { "time": "13:20 - 14:30", "subject": "Pendidikan Agama", "teacher": "C / T / S / K" }
+            ],
+            "tuesday": [
+                { "time": "7:10 - 8:30", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
+                { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
+                { "time": "9:30 - 10:40", "subject": "Bahasa Indonesia", "teacher": "Setyorini P, M.Pd" },
+                { "time": "10:40 - 12:45", "subject": "Pemasangan Perangkat", "teacher": "Encep Andi, S.T" },
+                { "time": "12:45 - 14:30", "subject": "Teknologi Jaringan Kabel Dan Nirkabel", "teacher": "Indra Gunawan, S.Kom" }
+            ],
+            "wednesday": [
+                { "time": "7:10 - 9:10", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
+                { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
+                { "time": "9:30 - 10:40", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
+                { "time": "10:40 - 12:45", "subject": "Administrasi Sistem Jaringan", "teacher": "Encep Andi, S.T" },
+                { "time": "12:45 - 14:30", "subject": "Keamanan Jaringan", "teacher": "Encep Andi, S.T" }
+            ],
+            "thursday": [
+                { "time": "7:10 - 8:30", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
+                { "time": "8:30 - 10:40", "subject": "Konfigurasi Perangkat", "teacher": "Encep Andi, S.T" },
+                { "time": "10:40 - 12:45", "subject": "Sistem Jaringan", "teacher": "Encep Andi, S.T" },
+                { "time": "12:45 - 13:55", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
+                { "time": "13:55 - 14:30", "subject": "Budi Pekerti", "teacher": "Winarsih S.pd MM" }
+            ],
+            "friday": [
+                { "time": "7:10 - 8:30", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
+                { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
+                { "time": "9:30 - 10:50", "subject": "Bahasa Mandarin", "teacher": "Loose Nicholas" }
+            ]
+        }
 
         function showTodaySchedule() {
-            const today = new Date().getDay(); // Sunday = 0, Monday = 1, ...
-            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-            if (today >= 1 && today <= 5) {
-                showSchedule(dayMapping[today]);
+            const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            const currentDay = new Date().getDay();
+            const dayMap = {1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday'};
+            if (currentDay >= 1 && currentDay <= 5) {
+                showSchedule(dayMap[currentDay]);
             } else {
-                alert('Tidak ada jadwal untuk hari ini!');
+                alert("Tidak ada jadwal untuk hari ini (Sabtu/Minggu)");
             }
         }
 
         function showSchedule(day) {
-            const scheduleBody = document.getElementById('schedule-body');
-            scheduleBody.innerHTML = '';
+            const scheduleBody = document.getElementById("schedule-body");
+            scheduleBody.innerHTML = "";
+            const todaySchedule = schedule[day];
 
-            const daySchedule = schedule[day];
-            if (daySchedule) {
-                daySchedule.forEach(item => {
-                    const row = `<tr><td>${item.time}</td><td>${item.subject}</td><td>${item.teacher}</td></tr>`;
-                    scheduleBody.innerHTML += row;
+            todaySchedule.forEach(item => {
+                const row = document.createElement("tr");
+                const timeCell = document.createElement("td");
+                timeCell.innerText = item.time;
+                const subjectCell = document.createElement("td");
+                subjectCell.innerText = item.subject;
+                const teacherCell = document.createElement("td");
+                teacherCell.innerText = item.teacher;
+
+                row.appendChild(timeCell);
+                row.appendChild(subjectCell);
+                row.appendChild(teacherCell);
+                scheduleBody.appendChild(row);
+            });
+
+            highlightOngoingClass(todaySchedule);
+        }
+
+        function highlightOngoingClass(todaySchedule) {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
+
+            let ongoingClass = null;
+            let nextClass = null;
+            todaySchedule.forEach(item => {
+                const [start, end] = item.time.split(" - ").map(t => {
+                    const [hours, minutes] = t.split(":").map(Number);
+                    return hours * 60 + minutes;
                 });
+
+                if (currentTime >= start && currentTime < end) {
+                    ongoingClass = item;
+                } else if (!nextClass && currentTime < start) {
+                    nextClass = item;
+                }
+            });
+
+            if (ongoingClass) {
+                document.getElementById("ongoing-class").innerText = `Kelas yang sedang berlangsung: ${ongoingClass.subject} - ${ongoingClass.teacher}`;
+            } else if (nextClass) {
+                document.getElementById("ongoing-class").innerText = `Kelas berikutnya: ${nextClass.subject} - ${nextClass.teacher} pada ${nextClass.time}`;
+            } else {
+                document.getElementById("ongoing-class").innerText = "Tidak ada kelas yang sedang berlangsung.";
             }
         }
 
-        // Function to update the clock every second
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds} WIB`;
+            document.getElementById("clock").innerText = `${hours}:${minutes}:${seconds} WIB`;
         }
-        setInterval(updateClock, 1000); // Update every second
 
-        // Function to update the running text
-        function updateRunningText() {
-        const now = new Date();
-        const today = now.getDay();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        setInterval(updateClock, 1000);
+        showTodaySchedule();
 
-        const runningText = document.getElementById('runningText');
-    
-        // Cek apakah hari ini adalah hari yang ada jadwal (Senin - Jumat)
-        if (today >= 1 && today <= 5) {
-            const todaySchedule = schedule[dayMapping[today]];
-            let isLessonOngoing = false;
+        // Running Text Example
+        document.getElementById("runningText").innerText = "Selamat Belajar! Jangan lupa istirahat dan jaga kesehatan!";
 
-            // Loop untuk mengecek apakah sekarang berada di dalam jam pelajaran
-            for (let i = 0; i < todaySchedule.length; i++) {
-                const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
-                const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
-
-                // Cek apakah waktu sekarang berada di dalam rentang waktu pelajaran
-                if ((now.getHours() > startHour || (now.getHours() === startHour && now.getMinutes() >= startMinute)) &&
-                    (now.getHours() < endHour || (now.getHours() === endHour && now.getMinutes() <= endMinute))) {
-                    runningText.textContent = `Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.`;
-                    isLessonOngoing = true;
-                    break;
-                }
-            }
-
-            // Jika tidak ada pelajaran yang berlangsung, tampilkan pesan ini
-            if (!isLessonOngoing) {
-                runningText.textContent = `Sekarang jam ${hours}:${minutes}, tidak ada pelajaran yang sedang berlangsung.`;
-            }
-        } else {
-            // Jika hari bukan Senin - Jumat, tampilkan pesan ini
-            runningText.textContent = 'Hari ini tidak ada jadwal pelajaran.';
+        // Toggle Dark Mode
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
         }
-    }
-
-    setInterval(updateRunningText, 10000); // Update setiap 10 detik
-    updateRunningText(); // Panggil saat halaman pertama kali dimuat
-</script>
-
+    </script>
 </body>
 </html>
