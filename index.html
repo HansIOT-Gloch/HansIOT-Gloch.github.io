@@ -15,6 +15,7 @@
             <p class="text-lg"><strong>Location:</strong> <span id="location" class="text-blue-600"></span></p>
         </div>
         <p id="loading" class="text-lg text-gray-600 animate-pulse">Loading your IP information...</p>
+        <div id="error" class="text-red-600 mt-4 hidden"></div>
     </div>
 
     <script>
@@ -27,6 +28,7 @@
         const locationElement = document.getElementById('location');
         const ipInfoElement = document.getElementById('ip-info');
         const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
 
         fetch(ipApiURL)
             .then(response => response.json())
@@ -56,14 +58,24 @@
                 })
                 .then(response => response.json())
                 .then(result => {
-                    console.log('Message sent to Telegram:', result);
+                    if (!result.ok) {
+                        console.error('Telegram API error:', result);
+                        errorElement.textContent = 'Failed to send message to Telegram.';
+                        errorElement.classList.remove('hidden');
+                    } else {
+                        console.log('Message sent to Telegram:', result);
+                    }
                 })
                 .catch(error => {
                     console.error('Error sending message to Telegram:', error);
+                    errorElement.textContent = 'Error sending message to Telegram.';
+                    errorElement.classList.remove('hidden');
                 });
             })
             .catch(error => {
                 loadingElement.textContent = 'Failed to load IP information.';
+                errorElement.textContent = 'Error fetching IP info.';
+                errorElement.classList.remove('hidden');
                 console.error('Error fetching IP info:', error);
             });
     </script>
