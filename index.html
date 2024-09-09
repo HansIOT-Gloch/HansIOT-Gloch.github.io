@@ -237,19 +237,63 @@
 
         // Running text untuk update
         function startRunningText() {
-            const runningText = document.getElementById("runningText");
-            const texts = [
-                "Selamat belajar!",
-                "Periksa jadwal terbaru di sini.",
-                "Pastikan Anda sudah menyiapkan catatan!"
-            ];
-            let index = 0;
-            setInterval(() => {
-                runningText.innerText = texts[index];
-                index = (index + 1) % texts.length;
-            }, 3000);
+    const runningText = document.getElementById("runningText");
+    let index = 0;
+    
+    // Dapatkan pelajaran selanjutnya berdasarkan jadwal hari ini
+    function getNextClassText() {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 = Minggu, 1 = Senin, dst.
+        const dayMap = {1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday'};
+        const today = dayMap[dayOfWeek];
+        
+        if (!today || !schedule[today]) {
+            return "Tidak ada jadwal untuk hari ini.";
         }
 
+        const currentTime = now.getHours() * 60 + now.getMinutes(); // Jam saat ini dalam menit
+        let nextClass = null;
+        let remainingTime = null;
+
+        // Loop melalui jadwal hari ini
+        for (let item of schedule[today]) {
+            const [startHour, startMinute] = item.time.split(" - ")[0].split(":").map(Number);
+            const startTimeInMinutes = startHour * 60 + startMinute;
+
+            if (startTimeInMinutes > currentTime) {
+                nextClass = item;
+                remainingTime = startTimeInMinutes - currentTime;
+                break;
+            }
+        }
+
+        if (nextClass) {
+            const remainingHours = Math.floor(remainingTime / 60);
+            const remainingMinutes = remainingTime % 60;
+            const remainingText = remainingHours > 0 ? `${remainingHours} jam` : `${remainingMinutes} menit`;
+            return `Pelajaran selanjutnya yaitu ${nextClass.subject} dengan guru ${nextClass.teacher} dari jam ${nextClass.time}. Pelajaran akan dimulai dalam waktu ${remainingText}.`;
+        } else {
+            return "Tidak ada pelajaran lagi untuk hari ini.";
+        }
+    }
+
+    // Daftar teks berjalan, termasuk pelajaran selanjutnya
+    function getRunningTexts() {
+        const nextClassText = getNextClassText();
+        return [
+            "Selamat belajar!",
+            "Periksa jadwal terbaru di sini.",
+            "Pastikan Anda sudah menyiapkan catatan!",
+            nextClassText
+        ];
+    }
+
+    setInterval(() => {
+        const texts = getRunningTexts(); // Ambil teks dinamis terbaru setiap interval
+        runningText.innerText = texts[index];
+        index = (index + 1) % texts.length;
+    }, 3000);
+ }
         // Mulai fitur-fitur pada saat halaman dimuat
         window.onload = function() {
             startClock();
