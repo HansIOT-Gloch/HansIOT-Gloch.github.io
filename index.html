@@ -1,1 +1,75 @@
-<h1> Hallow </h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Your IP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        #ip-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your IP Information</h1>
+        <div id="ip-info">
+            <p>IP Address: <span id="ip"></span></p>
+            <p>ISP: <span id="isp"></span></p>
+            <p>Location: <span id="location"></span></p>
+        </div>
+        <p id="loading">Loading your IP information...</p>
+    </div>
+    <script>
+        // API endpoint
+        const apiURL = 'https://ipapi.co/json/';
+
+        // Elements to update with IP info
+        const ipElement = document.getElementById('ip');
+        const ispElement = document.getElementById('isp');
+        const locationElement = document.getElementById('location');
+        const ipInfoElement = document.getElementById('ip-info');
+        const loadingElement = document.getElementById('loading');
+
+        // Fetch IP information
+        fetch(apiURL)
+            .then(response => response.json())
+            .then(data => {
+                ipElement.textContent = data.ip;
+                ispElement.textContent = data.org;
+                locationElement.textContent = `${data.city}, ${data.region}, ${data.country_name}`;
+                
+                // Show the IP information and hide the loading message
+                ipInfoElement.style.display = 'block';
+                loadingElement.style.display = 'none';
+            })
+            .catch(error => {
+                loadingElement.textContent = 'Failed to load IP information.';
+                console.error('Error fetching IP info:', error);
+            });
+    </script>
+</body>
+</html>
