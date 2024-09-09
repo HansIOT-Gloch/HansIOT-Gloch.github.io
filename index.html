@@ -168,9 +168,58 @@
             ]
         };
 
-        function showSchedule(day) { ... }
-        function showTodaySchedule() { ... }
-        function updateRunningText() { ... }
+        function showTodaySchedule() {
+            const today = new Date().getDay(); // Sunday = 0, Monday = 1, ...
+            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            if (today >= 1 && today <= 5) {
+                showSchedule(dayMapping[today]);
+            } else {
+                alert('Tidak ada jadwal untuk hari ini!');
+            }
+        }
+        function showSchedule(day) {
+            const scheduleBody = document.getElementById('schedule-body');
+            scheduleBody.innerHTML = '';
+
+            const daySchedule = schedule[day];
+            daySchedule.forEach(item => {
+                const row = <tr><td>${item.time}</td><td>${item.subject}</td><td>${item.teacher}</td></tr>;
+                scheduleBody.innerHTML += row;
+            });
+        }
+        function updateRunningText() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const day = now.getDay();
+            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+            const runningText = document.getElementById('runningText');
+
+            // Conditions for school time
+            if (hours >= 14 && minutes > 30 || hours > 14) {
+                runningText.textContent = 'Sekarang sudah lewat jam pulang, sekolah sudah selesai.';
+            } else if (hours < 7) {
+                runningText.textContent = 'Sekolah belum mulai, akan mulai jam 7:00 pagi.';
+            } else if (day >= 1 && day <= 5) {
+                const todaySchedule = schedule[dayMapping[day]];
+                for (let i = 0; i < todaySchedule.length; i++) {
+                    const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
+                    const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
+                    if (
+                        (hours > startHour || (hours === startHour && minutes >= startMinute)) &&
+                        (hours < endHour || (hours === endHour && minutes < endMinute))
+                    ) {
+                        runningText.textContent = Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.;
+                        break;
+                    } else {
+                        runningText.textContent = 'Tidak ada pelajaran yang sedang berlangsung.';
+                    }
+                }
+            } else {
+                runningText.textContent = 'Sekarang hari libur, tidak ada jadwal sekolah.';
+            }
+        }
 
         // Digital clock to display WIB time
         function updateClock() {
