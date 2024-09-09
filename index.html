@@ -132,7 +132,6 @@
     </div>
 
     <script>
-        // Schedule data and functions remain unchanged
         const schedule = {
             monday: [
                 { time: '7:00 - 7:50', subject: 'Matematika', teacher: 'Nita Rusdianita, S.Pd' },
@@ -177,64 +176,55 @@
                 alert('Tidak ada jadwal untuk hari ini!');
             }
         }
+
         function showSchedule(day) {
             const scheduleBody = document.getElementById('schedule-body');
             scheduleBody.innerHTML = '';
 
             const daySchedule = schedule[day];
-            daySchedule.forEach(item => {
-                const row = <tr><td>${item.time}</td><td>${item.subject}</td><td>${item.teacher}</td></tr>;
-                scheduleBody.innerHTML += row;
-            });
-        }
-        function updateRunningText() {
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const day = now.getDay();
-            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-
-            const runningText = document.getElementById('runningText');
-
-            // Conditions for school time
-            if (hours >= 14 && minutes > 30 || hours > 14) {
-                runningText.textContent = 'Sekarang sudah lewat jam pulang, sekolah sudah selesai.';
-            } else if (hours < 7) {
-                runningText.textContent = 'Sekolah belum mulai, akan mulai jam 7:00 pagi.';
-            } else if (day >= 1 && day <= 5) {
-                const todaySchedule = schedule[dayMapping[day]];
-                for (let i = 0; i < todaySchedule.length; i++) {
-                    const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
-                    const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
-                    if (
-                        (hours > startHour || (hours === startHour && minutes >= startMinute)) &&
-                        (hours < endHour || (hours === endHour && minutes < endMinute))
-                    ) {
-                        runningText.textContent = Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.;
-                        break;
-                    } else {
-                        runningText.textContent = 'Tidak ada pelajaran yang sedang berlangsung.';
-                    }
-                }
-            } else {
-                runningText.textContent = 'Sekarang hari libur, tidak ada jadwal sekolah.';
+            if (daySchedule) {
+                daySchedule.forEach(item => {
+                    const row = `<tr><td>${item.time}</td><td>${item.subject}</td><td>${item.teacher}</td></tr>`;
+                    scheduleBody.innerHTML += row;
+                });
             }
         }
 
-        // Digital clock to display WIB time
+        // Function to update the clock every second
         function updateClock() {
-            const clockElement = document.getElementById('clock');
             const now = new Date();
-            const options = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            const timeString = now.toLocaleTimeString('id-ID', options);
-            clockElement.textContent = `WIB: ${timeString}`;
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds} WIB`;
         }
+        setInterval(updateClock, 1000); // Update every second
 
-        setInterval(updateClock, 1000); // Update clock every second
-        updateClock(); // Initial call to set the time right away
+        // Function to update the running text
+        function updateRunningText() {
+            const now = new Date();
+            const today = now.getDay();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
+            if (today >= 1 && today <= 5) {
+                const todaySchedule = schedule[dayMapping[today]];
+
+                for (let i = 0; i < todaySchedule.length; i++) {
+                    const [startHour, startMinute] = todaySchedule[i].time.split(' - ')[0].split(':').map(Number);
+                    const [endHour, endMinute] = todaySchedule[i].time.split(' - ')[1].split(':').map(Number);
+
+                    if (now.getHours() >= startHour && now.getMinutes() >= startMinute &&
+                        now.getHours() <= endHour && now.getMinutes() <= endMinute) {
+                        const runningText = document.getElementById('runningText');
+                        runningText.textContent = `Sekarang jam ${hours}:${minutes}, sedang ada pelajaran ${todaySchedule[i].subject} dengan guru ${todaySchedule[i].teacher}, sampai jam ${endHour}:${endMinute}.`;
+                        break;
+                    }
+                }
+            }
+        }
         setInterval(updateRunningText, 10000); // Update every 10 seconds
-        updateRunningText(); // Initial call for running text
     </script>
 </body>
 </html>
