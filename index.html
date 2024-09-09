@@ -1,80 +1,181 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Creator</title>
+    <title>Jadwal XII TJKT</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            margin: 20px;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            background-color: #f4f4f9;
         }
-        .header {
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
+        h1 {
             text-align: center;
         }
         .container {
-            padding: 20px;
+            max-width: 800px;
+            margin: auto;
         }
-        input, textarea, button {
-            display: block;
-            margin: 10px 0;
+        .schedule-table {
             width: 100%;
-        }
-        textarea {
-            height: 150px;
-            font-family: monospace;
-        }
-        .output {
+            border-collapse: collapse;
             margin-top: 20px;
         }
-        .link {
-            word-break: break-all;
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        .schedule-table th {
+            background-color: #eee;
+        }
+        .day-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .day-buttons button {
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .day-buttons button:hover {
+            background-color: #0056b3;
+        }
+        #ongoing-class {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Web Creator</h1>
-    </div>
     <div class="container">
-        <input type="text" id="siteName" placeholder="Masukkan nama situs web">
-        <textarea id="indexHtml" placeholder="Tulis kode HTML..."></textarea>
-        <textarea id="styleCss" placeholder="Tulis kode CSS..."></textarea>
-        <button id="saveButton">Simpan dan Tampilkan</button>
-        <div class="output" id="output"></div>
+        <h1>Jadwal XII TJKT</h1>
+        
+        <div class="day-buttons">
+            <button onclick="showSchedule('monday')">Senin</button>
+            <button onclick="showSchedule('tuesday')">Selasa</button>
+            <button onclick="showSchedule('wednesday')">Rabu</button>
+            <button onclick="showSchedule('thursday')">Kamis</button>
+            <button onclick="showSchedule('friday')">Jumat</button>
+            <button onclick="showTodaySchedule()">Jadwal Hari Ini</button>
+            <button onclick="showOngoingClass()">Pelajaran yang Sedang Berlangsung</button>
+        </div>
+
+        <table class="schedule-table" id="schedule">
+            <thead>
+                <tr>
+                    <th>Jam</th>
+                    <th>Pelajaran</th>
+                    <th>Guru</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body">
+                <!-- Schedule will be loaded here -->
+            </tbody>
+        </table>
+
+        <div id="ongoing-class"></div>
     </div>
 
     <script>
-        document.getElementById('saveButton').addEventListener('click', function() {
-            const siteName = document.getElementById('siteName').value.trim();
-            const indexHtml = document.getElementById('indexHtml').value;
-            const styleCss = document.getElementById('styleCss').value;
+        const schedule = {
+            monday: [
+                { time: '7:00 - 7:50', subject: 'Matematika', teacher: 'Nita Rusdianita, S.Pd' },
+                { time: '7:50 - 8:30', subject: 'Pendidikan Pancasila', teacher: 'Sugiono, S.Pd' },
+                { time: '8:30 - 9:10', subject: 'Teknologi Jaringan Kabel', teacher: 'Indra Gunawan, S.Kom' },
+                { time: '9:20 - 10:00', subject: 'Teknologi Nirkabel', teacher: 'Indra Gunawan, S.Kom' },
+                { time: '10:00 - 10:45', subject: 'Bimbingan Konseling', teacher: 'Winarsih, S.Pd, MM' },
+                { time: '10:45 - 11:15', subject: 'Pendidikan Agama', teacher: 'C / T / S / K' },
+            ],
+            tuesday: [
+                { time: '7:00 - 7:50', subject: 'Bahasa Inggris', teacher: 'Donna Morfini, S.Pd, M.Ikom' },
+                { time: '7:50 - 8:30', subject: 'Bahasa Indonesia', teacher: 'Setyorini P, M.Pd' },
+                { time: '8:30 - 9:10', subject: 'Pemasangan Perangkat', teacher: 'Encep Andi, S.T' },
+                { time: '9:20 - 10:00', subject: 'Konfigurasi Perangkat', teacher: 'Encep Andi, S.T' },
+                { time: '10:00 - 10:45', subject: 'Teknologi Jaringan', teacher: 'Indra Gunawan, S.Kom' },
+            ],
+            wednesday: [
+                { time: '7:00 - 7:50', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
+                { time: '7:50 - 8:30', subject: 'Bahasa Inggris', teacher: 'Donna Morfini, S.Pd, M.Ikom' },
+                { time: '8:30 - 9:10', subject: 'Sistem Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '9:20 - 10:00', subject: 'Keamanan Jaringan', teacher: 'Encep Andi, S.T' },
+            ],
+            thursday: [
+                { time: '7:00 - 7:50', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
+                { time: '7:50 - 8:30', subject: 'Konfigurasi Perangkat', teacher: 'Encep Andi, S.T' },
+                { time: '8:30 - 9:10', subject: 'Sistem Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '9:20 - 10:00', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
+            ],
+            friday: [
+                { time: '7:00 - 7:50', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
+                { time: '7:50 - 8:30', subject: 'Bahasa Mandarin', teacher: 'Loose Nicholas' },
+                { time: '8:30 - 9:10', subject: 'Budi Pekerti', teacher: 'Winarsih, S.Pd, MM' },
+            ]
+        };
 
-            if (!siteName) {
-                alert('Masukkan nama situs web!');
+        function showSchedule(day) {
+            const scheduleBody = document.getElementById('schedule-body');
+            scheduleBody.innerHTML = '';
+
+            const daySchedule = schedule[day];
+            daySchedule.forEach(item => {
+                const row = `<tr><td>${item.time}</td><td>${item.subject}</td><td>${item.teacher}</td></tr>`;
+                scheduleBody.innerHTML += row;
+            });
+        }
+
+        function showTodaySchedule() {
+            const today = new Date().getDay(); // Sunday = 0, Monday = 1, ...
+            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            if (today >= 1 && today <= 5) {
+                showSchedule(dayMapping[today]);
+            } else {
+                alert('Tidak ada jadwal untuk hari ini!');
+            }
+        }
+
+        function showOngoingClass() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ongoing = document.getElementById('ongoing-class');
+            
+            const day = new Date().getDay(); // Sunday = 0, Monday = 1, etc.
+            const dayMapping = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+            if (day < 1 || day > 5) {
+                ongoing.textContent = 'Tidak ada pelajaran berlangsung';
                 return;
             }
 
-            // Simpan file di localStorage
-            localStorage.setItem(`${siteName}_index.html`, indexHtml);
-            localStorage.setItem(`${siteName}_style.css`, styleCss);
+            const currentDay = schedule[dayMapping[day]];
+            let ongoingClass = 'Tidak ada pelajaran berlangsung';
 
-            // Tampilkan URL untuk preview
-            const previewUrl = `https://hansiot-gloch.github.io/${siteName}/index.html`;
-            const outputElement = document.getElementById('output');
-            outputElement.innerHTML = `
-                <p>Situs web Anda telah disimpan!</p>
-                <p>URL Preview:</p>
-                <a href="${previewUrl}" class="link" target="_blank">${previewUrl}</a>
-            `;
-        });
+            currentDay.forEach(item => {
+                const [start, end] = item.time.split(' - ');
+                const [startH, startM] = start.split(':').map(Number);
+                const [endH, endM] = end.split(':').map(Number);
+                const startTime = new Date(now);
+                startTime.setHours(startH, startM, 0, 0);
+                const endTime = new Date(now);
+                endTime.setHours(endH, endM, 0, 0);
+
+                if (now >= startTime && now <= endTime) {
+                    ongoingClass = `Pelajaran: ${item.subject}, Guru: ${item.teacher}`;
+                }
+            });
+
+            ongoing.textContent = ongoingClass;
+        }
     </script>
 </body>
 </html>
