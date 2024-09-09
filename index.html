@@ -6,9 +6,15 @@
     <title>Simple Economic Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Basic styling for game elements */
         #game-container {
             display: none;
+        }
+        .item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fff;
         }
     </style>
 </head>
@@ -27,6 +33,19 @@
         <h1 class="text-2xl font-bold mb-4">Economic Game</h1>
         <p id="money" class="text-xl mb-4">Money: $0</p>
         <button onclick="earnMoney()" class="bg-green-500 text-white p-2 rounded-lg w-full mb-4">Earn Money</button>
+
+        <!-- Item Buying Section -->
+        <h2 class="text-xl font-semibold mb-2">Buy Items</h2>
+        <div id="items-container">
+            <!-- Items will be dynamically added here -->
+        </div>
+
+        <!-- Upgrade Section -->
+        <h2 class="text-xl font-semibold mb-2">Upgrades</h2>
+        <div id="upgrades-container">
+            <!-- Upgrades will be dynamically added here -->
+        </div>
+
         <h2 class="text-xl font-semibold mb-2">Leaderboard</h2>
         <ul id="leaderboard" class="list-disc pl-5">
             <!-- Leaderboard will be updated here -->
@@ -36,6 +55,8 @@
     <script>
         const USERNAME_KEY = 'username';
         const LEADERBOARD_KEY = 'leaderboard';
+        const ITEMS_KEY = 'items';
+        const UPGRADES_KEY = 'upgrades';
 
         function setUsername() {
             const usernameInput = document.getElementById('username');
@@ -61,13 +82,18 @@
 
             localStorage.setItem(USERNAME_KEY, username);
             localStorage.setItem('money', 0); // Initialize money
+            localStorage.setItem(ITEMS_KEY, JSON.stringify([])); // Initialize items
+            localStorage.setItem(UPGRADES_KEY, JSON.stringify([])); // Initialize upgrades
 
             document.getElementById('username-form').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
 
-            // Start leaderboard update
-            setInterval(updateLeaderboard, 30000);
-            updateLeaderboard();
+            // Start item income update
+            setInterval(updateItemIncome, 1000);
+            setInterval(updateLeaderboard, 10000); // Update leaderboard every 10 seconds
+            loadItems();
+            loadUpgrades();
+            updateLeaderboard(); // Initial load
         }
 
         function earnMoney() {
@@ -101,13 +127,110 @@
             ).join('');
         }
 
+        function updateItemIncome() {
+            const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+            let totalIncome = 0;
+
+            items.forEach(item => {
+                totalIncome += item.income * item.quantity;
+            });
+
+            let money = parseInt(localStorage.getItem('money'), 10) || 0;
+            money += totalIncome;
+            localStorage.setItem('money', money);
+            document.getElementById('money').textContent = `Money: $${money}`;
+        }
+
+        function loadItems() {
+            const itemsContainer = document.getElementById('items-container');
+            const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+
+            const itemDefinitions = [
+                { id: 'item1', name: 'Basic Farm', cost: 50, income: 1 },
+                { id: 'item2', name: 'Advanced Farm', cost: 200, income: 5 }
+            ];
+
+            itemsContainer.innerHTML = itemDefinitions.map(def => {
+                const ownedItem = items.find(item => item.id === def.id) || { quantity: 0 };
+                return `
+                    <div class="item">
+                        <h3 class="text-lg font-semibold">${def.name}</h3>
+                        <p>Cost: $${def.cost}</p>
+                        <p>Income: $${def.income}/s</p>
+                        <p>Owned: ${ownedItem.quantity}</p>
+                        <button onclick="buyItem('${def.id}', ${def.cost})" class="bg-blue-500 text-white p-2 rounded-lg mt-2">Buy</button>
+                        <button onclick="upgradeItem('${def.id}')" class="bg-green-500 text-white p-2 rounded-lg mt-2">Upgrade</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buyItem(itemId, cost) {
+            let money = parseInt(localStorage.getItem('money'), 10) || 0;
+            if (money >= cost) {
+                money -= cost;
+                localStorage.setItem('money', money);
+
+                let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+                const itemIndex = items.findIndex(item => item.id === itemId);
+                if (itemIndex >= 0) {
+                    items[itemIndex].quantity += 1;
+                } else {
+                    items.push({ id: itemId, quantity: 1 });
+                }
+                localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+                loadItems();
+                document.getElementById('money').textContent = `Money: $${money}`;
+            }
+        }
+
+        function upgradeItem(itemId) {
+            let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+            let upgrades = JSON.parse(localStorage.getItem(UPGRADES_KEY)) || [];
+
+            const itemIndex = items.findIndex(item => item.id === itemId);
+            if (itemIndex >= 0) {
+                const item = items[itemIndex];
+                const itemUpgrades = upgrades.find(upgrade => upgrade.id === itemId) || { level: 0 };
+
+                // Each upgrade level increases the income multiplier by 2
+                const upgradeCost = 100 * (itemUpgrades.level + 1);
+                if (parseInt(localStorage.getItem('money'), 10) >= upgradeCost) {
+                    // Upgrade the item
+                    let money = parseInt(localStorage.getItem('money'), 10);
+                    money -= upgradeCost;
+                    localStorage.setItem('money', money);
+
+                    itemUpgrades.level += 1;
+                    upgrades = upgrades.filter(upgrade => upgrade.id !== itemId);
+                    upgrades.push(itemUpgrades);
+                    localStorage.setItem(UPGRADES_KEY, JSON.stringify(upgrades));
+
+                    // Update the item
+                    items[itemIndex] = { ...item, income: item.income * (itemUpgrades.level + 1) };
+                    localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+                    document.getElementById('money').textContent = `Money: $${money}`;
+                    loadItems();
+                }
+            }
+        }
+
         function checkForExistingUsername() {
             const username = localStorage.getItem(USERNAME_KEY);
             if (username) {
                 document.getElementById('username-form').style.display = 'none';
                 document.getElementById('game-container').style.display = 'block';
                 updateLeaderboard(); // Ensure leaderboard is updated
+                loadItems(); // Load items
+                loadUpgrades(); // Load upgrades
+                setInterval(updateItemIncome, 1000);
+                setInterval(updateLeaderboard, 10000); // Update leaderboard every 10 seconds
             }
+        }
+
+        function loadUpgrades() {
+            // Placeholder function for loading upgrades, if any.
+            // Add code here to display current upgrades and their effects.
         }
 
         checkForExistingUsername();
