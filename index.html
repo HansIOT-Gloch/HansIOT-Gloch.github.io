@@ -133,38 +133,44 @@
 
     <script>
         const schedule = {
-            monday: [
-                { time: '7:10 - 9.10', subject: 'Matematika', teacher: 'Nita Rusdianita, S.Pd' },
-                { time: '9:30 - 10:40', subject: 'Pendidikan Pancasila', teacher: 'Sugiono, S.Pd' },
-                { time: '10:40 - 11:50', subject: 'Teknologi Jaringan Kabel', teacher: 'Indra Gunawan, S.Kom' },
-                { time: '12:10 - 13:20', subject: 'Bimbingan Konseling', teacher: 'Winarsih, S.Pd, MM' },
-                { time: '13:20 - 14:30', subject: 'Pendidikan Agama', teacher: 'C / T / S / K' },
-            ],
-            tuesday: [
-                { time: '7:10 - 8:30', subject: 'Bahasa Inggris', teacher: 'Donna Morfini, S.Pd, M.Ikom' },
-                { time: '9:30 - 10:40', subject: 'Bahasa Indonesia', teacher: 'Setyorini P, M.Pd' },
-                { time: '10:40 - 12:45', subject: 'Pemasangan Perangkat', teacher: 'Encep Andi, S.T' },
-                { time: '12:45 - 14:30', subject: 'Teknologi Jaringan Kabel Dan Nirkabel', teacher: 'Indra Gunawan, S.Kom' },
-            ],
-            wednesday: [
-                { time: '7:10 - 9:10', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
-                { time: '9:30 - 10:40', subject: 'Bahasa Inggris', teacher: 'Donna Morfini, S.Pd, M.Ikom' },
-                { time: '10:40 - 12:45', subject: ' Administrasi Sistem Jaringan', teacher: 'Encep Andi, S.T' },
-                { time: '12:45 - 14:30', subject: 'Keamanan Jaringan', teacher: 'Encep Andi, S.T' },
-            ],
-            thursday: [
-                { time: '7:10 - 8:30', subject: 'Kewirausahaan', teacher: 'Danwayanah, S.S' },
-                { time: '8:30 - 10:40', subject: 'Konfigurasi Perangkat', teacher: 'Encep Andi, S.T' },
-                { time: '10:40 - 12:45', subject: 'Sistem Jaringan', teacher: 'Encep Andi, S.T' },
-                { time: '12:45 - 13:55', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
-                { time: '13:55 - 14:30', subject: 'Budi Pekerti', teacher: 'Encep Andi, S.T' },
-            ],
-            friday: [
-                { time: '7:10 - 8:30', subject: 'Perencanaan Jaringan', teacher: 'Encep Andi, S.T' },
-                { time: '9:30 - 10:05', subject: 'Bahasa Mandarin', teacher: 'Loose Nicholas' },
-                { time: '8:30 - 9:10', subject: 'Budi Pekerti', teacher: 'Winarsih, S.Pd, MM' },
-            ]
-        };
+    "monday": [
+        { "time": "7:10 - 9:10", "subject": "Matematika", "teacher": "Nita Rusdianita, S.Pd" },
+        { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
+        { "time": "9:30 - 10:40", "subject": "Pendidikan Pancasila", "teacher": "Sugiono, S.Pd" },
+        { "time": "10:40 - 11:50", "subject": "Teknologi Jaringan Kabel", "teacher": "Indra Gunawan, S.Kom" },
+        { "time": "11:50 - 12:10", "subject": "Istirahat", "teacher": "" },
+        { "time": "12:10 - 13:20", "subject": "Bimbingan Konseling", "teacher": "Winarsih, S.Pd, MM" },
+        { "time": "13:20 - 14:30", "subject": "Pendidikan Agama", "teacher": "C / T / S / K" }
+    ],
+    "tuesday": [
+        { "time": "7:10 - 8:30", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
+        { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
+        { "time": "9:30 - 10:40", "subject": "Bahasa Indonesia", "teacher": "Setyorini P, M.Pd" },
+        { "time": "10:40 - 12:45", "subject": "Pemasangan Perangkat", "teacher": "Encep Andi, S.T" },
+        { "time": "12:45 - 14:30", "subject": "Teknologi Jaringan Kabel Dan Nirkabel", "teacher": "Indra Gunawan, S.Kom" }
+    ],
+    "wednesday": [
+        { "time": "7:10 - 9:10", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
+        { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
+        { "time": "9:30 - 10:40", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
+        { "time": "10:40 - 12:45", "subject": "Administrasi Sistem Jaringan", "teacher": "Encep Andi, S.T" },
+        { "time": "12:45 - 14:30", "subject": "Keamanan Jaringan", "teacher": "Encep Andi, S.T" }
+    ],
+    "thursday": [
+        { "time": "7:10 - 8:30", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
+        { "time": "8:30 - 10:40", "subject": "Konfigurasi Perangkat", "teacher": "Encep Andi, S.T" },
+        { "time": "10:40 - 12:45", "subject": "Sistem Jaringan", "teacher": "Encep Andi, S.T" },
+        { "time": "12:45 - 13:55", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
+        { "time": "13:55 - 14:30", "subject": "Budi Pekerti", "teacher": "Winarsih S.pd MM" }
+    ],
+    "friday": [
+        { "time": "7:10 - 8:30", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
+        { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
+        { "time": "9:30 - 10:05", "subject": "Bahasa Mandarin", "teacher": "Loose Nicholas" },
+        { "time": "10:05 - 10:30", "subject": "Budi Pekerti", "teacher": "Winarsih, S.Pd, MM" }
+    ]
+}
+
 
         function showTodaySchedule() {
             const today = new Date().getDay(); // Sunday = 0, Monday = 1, ...
