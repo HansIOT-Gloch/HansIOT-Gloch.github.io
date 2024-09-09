@@ -5,120 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jadwal XII TJKT</title>
     <style>
+        /* Style dasar untuk tampilan */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-            background-color: #f4f4f9;
+            background-color: #f0f0f0;
             color: #333;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
         }
         h1 {
             text-align: center;
         }
-        .container {
-            max-width: 100%;
-            margin: auto;
-            padding: 10px;
-        }
-        .schedule-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .schedule-table th, .schedule-table td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-        .schedule-table th {
-            background-color: #eee;
-        }
-        .current-class {
-            background-color: #ffeb3b;
-        }
-        .day-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
         .day-buttons button {
             margin: 5px;
             padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .schedule-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .schedule-table th, .schedule-table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        .week-schedule {
+            display: none;
+        }
+        .countdown-timer {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        .note-container {
+            margin-top: 20px;
+        }
+        .note-container textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            padding: 10px;
+        }
+        .save-note-btn {
             background-color: #007bff;
             color: white;
+            padding: 10px;
             border: none;
             cursor: pointer;
             border-radius: 5px;
-            width: 45%;
-            font-size: 14px;
-        }
-        .day-buttons button:hover {
-            background-color: #0056b3;
-        }
-        #ongoing-class {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .running-text {
+            margin-top: 10px;
             width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            background-color: #007bff;
-            color: white;
-            padding: 10px 0;
-            margin-top: 20px;
-            text-align: center;
-            font-size: 16px;
-        }
-        .running-text span {
-            display: inline-block;
-            padding-left: 100%;
-            animation: scroll 15s linear infinite;
-        }
-        @keyframes blink {
-        0% { background-color: #ffeb3b; }
-        50% { background-color: #ff4d4d; }
-        100% { background-color: #ffeb3b; }
-        }
-
-        .blinking {
-        animation: blink 1s infinite;
-        }
-
-        @keyframes scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        @media (max-width: 768px) {
-            .day-buttons button {
-                width: 100%;
-            }
-        }
-        #clock {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 18px;
-            z-index: 999;
-        }
-        .dark-mode {
-            background-color: #333;
-            color: white;
-        }
-        .dark-mode #clock {
-            background-color: #555;
         }
     </style>
 </head>
 <body>
     <div id="clock"></div> <!-- Digital clock for WIB time -->
+    <audio id="notification-sound" src="notification.mp3" preload="auto"></audio> <!-- Notifikasi Audio -->
 
     <div class="container">
         <h1>Jadwal XII TJKT</h1>
@@ -130,26 +77,37 @@
             <button onclick="showSchedule('thursday')">Kamis</button>
             <button onclick="showSchedule('friday')">Jumat</button>
             <button onclick="showTodaySchedule()">Jadwal Hari Ini</button>
+            <button onclick="toggleWeekSchedule()">Tampilkan Jadwal Minggu Ini</button>
             <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
         </div>
 
         <table class="schedule-table" id="schedule">
-            <thead>
-                <tr>
-                    <th>Jam</th>
-                    <th>Pelajaran</th>
-                    <th>Guru</th>
-                </tr>
-            </thead>
-            <tbody id="schedule-body">
-                <!-- Schedule will be loaded here -->
-            </tbody>
+            <!-- Jadwal akan dimuat di sini -->
         </table>
 
         <div id="ongoing-class"></div>
+        <div id="countdown-timer" class="countdown-timer"></div> <!-- Penghitung Waktu Mundur -->
 
         <div class="running-text">
             <span id="runningText">Memuat informasi...</span>
+        </div>
+
+        <!-- Jadwal Mingguan -->
+        <div id="week-schedule" class="week-schedule">
+            <h2>Jadwal Mingguan</h2>
+            <table class="schedule-table">
+                <!-- Tabel yang berisi seluruh jadwal dalam seminggu -->
+                <tbody id="week-schedule-body">
+                    <!-- Jadwal minggu ini akan diisi di sini -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Fitur Catatan -->
+        <div class="note-container">
+            <h3>Catatan Pelajaran</h3>
+            <textarea id="notes" placeholder="Tambahkan catatan untuk pelajaran ini..."></textarea>
+            <button class="save-note-btn" onclick="saveNote()">Simpan Catatan</button>
         </div>
     </div>
 
@@ -190,95 +148,114 @@
                 { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
                 { "time": "9:30 - 10:50", "subject": "Bahasa Mandarin", "teacher": "Loose Nicholas" }
             ]
-        }
+        };
 
-        function showTodaySchedule() {
-            const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-            const currentDay = new Date().getDay();
-            const dayMap = {1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday'};
-            if (currentDay >= 1 && currentDay <= 5) {
-                showSchedule(dayMap[currentDay]);
-            } else {
-                alert("Tidak ada jadwal untuk hari ini (Sabtu/Minggu)");
+        function showSchedule(day) {
+            const scheduleTable = document.getElementById("schedule");
+            scheduleTable.innerHTML = ""; // Hapus isi tabel sebelumnya
+            if (schedule[day]) {
+                schedule[day].forEach((item, index) => {
+                    const row = scheduleTable.insertRow(index);
+                    const timeCell = row.insertCell(0);
+                    const subjectCell = row.insertCell(1);
+                    const teacherCell = row.insertCell(2);
+
+                    timeCell.innerText = item.time;
+                    subjectCell.innerText = item.subject;
+                    teacherCell.innerText = item.teacher;
+                });
             }
         }
 
-        function showSchedule(day) {
-            const scheduleBody = document.getElementById("schedule-body");
-            scheduleBody.innerHTML = "";
-            const todaySchedule = schedule[day];
-
-            todaySchedule.forEach(item => {
-                const row = document.createElement("tr");
-                const timeCell = document.createElement("td");
-                timeCell.innerText = item.time;
-                const subjectCell = document.createElement("td");
-                subjectCell.innerText = item.subject;
-                const teacherCell = document.createElement("td");
-                teacherCell.innerText = item.teacher;
-
-                row.appendChild(timeCell);
-                row.appendChild(subjectCell);
-                row.appendChild(teacherCell);
-                scheduleBody.appendChild(row);
-            });
-
-            highlightOngoingClass(todaySchedule);
+        function showTodaySchedule() {
+            const today = new Date().getDay();
+            const days = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+            if (today >= 1 && today <= 5) {
+                showSchedule(days[today - 1]);
+            } else {
+                document.getElementById("schedule").innerHTML = "<tr><td colspan='3'>Tidak ada jadwal untuk hari ini.</td></tr>";
+            }
         }
 
-        function highlightOngoingClass(todaySchedule) {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
-
-    let ongoingClass = null;
-    let nextClass = null;
-    todaySchedule.forEach((item, index) => {
-        const [start, end] = item.time.split(" - ").map(t => {
-            const [hours, minutes] = t.split(":").map(Number);
-            return hours * 60 + minutes;
-        });
-
-        const row = document.getElementById("schedule-body").children[index];
-
-        if (currentTime >= start && currentTime < end) {
-            ongoingClass = item;
-            row.classList.add("blinking");
-        } else {
-            row.classList.remove("blinking");
+        function toggleWeekSchedule() {
+            const weekSchedule = document.getElementById("week-schedule");
+            weekSchedule.style.display = weekSchedule.style.display === "none" ? "block" : "none";
         }
 
-        if (!nextClass && currentTime < start) {
-            nextClass = item;
-        }
-    });
-
-    if (ongoingClass) {
-        document.getElementById("ongoing-class").innerText = `Kelas yang sedang berlangsung: ${ongoingClass.subject} - ${ongoingClass.teacher}`;
-    } else if (nextClass) {
-        document.getElementById("ongoing-class").innerText = `Kelas berikutnya: ${nextClass.subject} - ${nextClass.teacher} pada ${nextClass.time}`;
-    } else {
-        document.getElementById("ongoing-class").innerText = "Tidak ada kelas yang sedang berlangsung.";
-    }
- }
-
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById("clock").innerText = `${hours}:${minutes}:${seconds} WIB`;
-        }
-
-        setInterval(updateClock, 1000);
-        showTodaySchedule();
-
-        // Running Text Example
-        document.getElementById("runningText").innerText = "Selamat Belajar! Jangan lupa istirahat dan jaga kesehatan!";
-
-        // Toggle Dark Mode
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
         }
+
+        function saveNote() {
+            const notes = document.getElementById("notes").value;
+            localStorage.setItem("scheduleNotes", notes);
+            alert("Catatan berhasil disimpan.");
+        }
+
+        function loadNotes() {
+            const savedNotes = localStorage.getItem("scheduleNotes");
+            if (savedNotes) {
+                document.getElementById("notes").value = savedNotes;
+            }
+        }
+
+        // Digital clock
+        function startClock() {
+            const clock = document.getElementById("clock");
+            setInterval(() => {
+                const date = new Date();
+                clock.innerText = `Waktu WIB: ${date.toLocaleTimeString('id-ID')}`;
+            }, 1000);
+        }
+
+        // Countdown Timer untuk kelas
+        function startCountdown(targetTime) {
+            const countdown = document.getElementById("countdown-timer");
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetTime - now;
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                countdown.innerText = `Waktu tersisa: ${hours}h ${minutes}m ${seconds}s`;
+
+                if (distance < 0) {
+                    clearInterval(interval);
+                    countdown.innerText = "Kelas telah dimulai!";
+                    playNotificationSound();
+                }
+            }, 1000);
+        }
+
+        // Notifikasi suara
+        function playNotificationSound() {
+            const notificationSound = document.getElementById("notification-sound");
+            notificationSound.play();
+        }
+
+        // Running text untuk update
+        function startRunningText() {
+            const runningText = document.getElementById("runningText");
+            const texts = [
+                "Selamat belajar!",
+                "Periksa jadwal terbaru di sini.",
+                "Pastikan Anda sudah menyiapkan catatan!"
+            ];
+            let index = 0;
+            setInterval(() => {
+                runningText.innerText = texts[index];
+                index = (index + 1) % texts.length;
+            }, 3000);
+        }
+
+        // Mulai fitur-fitur pada saat halaman dimuat
+        window.onload = function() {
+            startClock();
+            startRunningText();
+            loadNotes();
+        };
     </script>
 </body>
-</html> 
+</html>
