@@ -46,6 +46,8 @@
 
                 const message = `IP: ${ip}\nISP: ${isp}\nLocation: ${location}`;
 
+                console.log("Sending message to Telegram: ", message);
+
                 fetch(telegramApiURL, {
                     method: 'POST',
                     headers: {
@@ -56,14 +58,17 @@
                         text: message,
                     }),
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log("Telegram API response status: ", response.status);
+                    return response.json();
+                })
                 .then(result => {
-                    if (!result.ok) {
-                        console.error('Telegram API error:', result);
+                    if (result.ok) {
+                        console.log('Message successfully sent to Telegram:', result);
+                    } else {
+                        console.error('Telegram API error response:', result);
                         errorElement.textContent = 'Failed to send message to Telegram.';
                         errorElement.classList.remove('hidden');
-                    } else {
-                        console.log('Message sent to Telegram:', result);
                     }
                 })
                 .catch(error => {
