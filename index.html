@@ -98,7 +98,7 @@
 
         function earnMoney() {
             let money = parseInt(localStorage.getItem('money'), 10) || 0;
-            money += 100; // Increase money by 10
+            money += 10; // Increase money by 10
             localStorage.setItem('money', money);
             document.getElementById('money').textContent = `Money: $${money}`;
         }
@@ -197,17 +197,16 @@
                 const upgradeCost = 100 * (itemUpgrades.level + 1);
                 if (parseInt(localStorage.getItem('money'), 10) >= upgradeCost) {
                     // Upgrade the item
-                    let money = parseInt(localStorage.getItem('money'), 10);
+                    let money = parseInt(localStorage.getItem('money'), 10) || 0;
                     money -= upgradeCost;
                     localStorage.setItem('money', money);
 
-                    itemUpgrades.level += 1;
+                    itemUpgrades.level = (itemUpgrades.level || 0) + 1;
                     upgrades = upgrades.filter(upgrade => upgrade.id !== itemId);
                     upgrades.push(itemUpgrades);
                     localStorage.setItem(UPGRADES_KEY, JSON.stringify(upgrades));
 
-                    // Update the item
-                    items[itemIndex] = { ...item, income: item.income * (itemUpgrades.level + 1) };
+                    items[itemIndex].income = item.income * (itemUpgrades.level + 1);
                     localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
 
                     document.getElementById('money').textContent = `Money: $${money}`;
