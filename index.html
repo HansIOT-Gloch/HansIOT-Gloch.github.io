@@ -129,7 +129,7 @@
 
         function updateItemIncome() {
             const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
-            let totalIncome = 0;
+            let totalIncome = 1;
 
             items.forEach(item => {
                 totalIncome += item.income * item.quantity;
