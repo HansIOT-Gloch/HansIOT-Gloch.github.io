@@ -138,13 +138,17 @@
         .password-popup-content input {
             margin-bottom: 10px;
         }
+
+        .toolbar .logo-button {
+            font-size: 1.2em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>File Manager</h1>
         <div class="toolbar">
-            <button onclick="toggleMenu()">Menu</button>
+            <button class="logo-button" onclick="toggleMenu()">☰ Menu</button>
             <div id="hidden-menu" class="hidden-menu">
                 <button onclick="showPasswordPopup('delete')">Delete Folder</button>
                 <button onclick="showPasswordPopup('rename')">Rename Folder</button>
@@ -295,7 +299,6 @@
             const url = new URL(window.location);
             url.searchParams.set('folder', folderName);
             window.history.pushState({}, '', url);
-            currentFolder = folderName;
             document.getElementById('main-view').style.display = 'none';
             document.getElementById('folder-view').style.display = 'block';
             document.getElementById('current-folder').textContent = folderName;
@@ -322,6 +325,7 @@
                     fileDiv.className = 'file';
                     fileDiv.innerHTML = `
                         <span>${file}</span>
+                        <button onclick="downloadFile('${folderName}', '${file}')">Download</button>
                         <button onclick="deleteFile('${folderName}', '${file}')">Delete</button>
                     `;
                     fileList.appendChild(fileDiv);
@@ -361,6 +365,16 @@
                 localStorage.setItem('folders', JSON.stringify(folders));
                 displayFiles(folderName);
             }
+        }
+
+        function downloadFile(folderName, fileName) {
+            const fileContent = new Blob(["Sample file content"], { type: "text/plain" });
+            const url = URL.createObjectURL(fileContent);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         function toggleMenu() {
