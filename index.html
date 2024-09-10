@@ -214,21 +214,21 @@
 
         function loadFolders() {
             fetch('/folders')
-            .then(response => response.json())
-            .then(folders => {
-                const folderList = document.getElementById('folder-list');
-                folderList.innerHTML = '';
+                .then(response => response.json())
+                .then(data => {
+                    const folderList = document.getElementById('folder-list');
+                    folderList.innerHTML = '';
 
-                folders.forEach(folder => {
-                    const folderDiv = document.createElement('div');
-                    folderDiv.className = 'folder';
-                    folderDiv.innerHTML = `
-                        <span>${folder.name}</span>
-                        <button onclick="openFolder('${folder.name}')">Open</button>
-                    `;
-                    folderList.appendChild(folderDiv);
+                    data.folders.forEach(folder => {
+                        const folderDiv = document.createElement('div');
+                        folderDiv.className = 'folder';
+                        folderDiv.innerHTML = `
+                            <span>${folder.name}</span>
+                            <button onclick="openFolder('${folder.name}')">Open</button>
+                        `;
+                        folderList.appendChild(folderDiv);
+                    });
                 });
-            });
         }
 
         function showPasswordPopup(type) {
@@ -240,54 +240,10 @@
             const folderName = document.getElementById('folder-name-input').value;
             const password = document.getElementById('password-input').value;
 
-            fetch('/folders/check', {
-                method: 'POST',
+            fetch('/folders', {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: folderName, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    if (actionType === 'delete') {
-                        deleteFolder(folderName);
-                    } else if (actionType === 'rename') {
-                        const newName = prompt('Enter new folder name:', folderName);
-                        if (newName) {
-                            renameFolder(folderName, newName);
-                        }
-                    }
-                    closePasswordPopup();
-                } else {
-                    alert('Incorrect password or folder not found');
-                }
-            });
-        }
-
-        function closePasswordPopup() {
-            document.getElementById('password-popup').style.display = 'none';
-        }
-
-        function renameFolder(oldName, newName) {
-            fetch('/folders/rename', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldName, newName })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadFolders();
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
-
-        function deleteFolder(folderName) {
-            fetch('/folders/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: folderName })
+                body: JSON.stringify({ name: folderName, password: password, action: actionType })
             })
             .then(response => response.json())
             .then(data => {
@@ -298,55 +254,72 @@
                     alert(data.message);
                 }
             });
+
+            closePasswordPopup();
+        }
+
+        function closePasswordPopup() {
+            document.getElementById('password-popup').style.display = 'none';
         }
 
         function openFolder(folderName) {
-            currentFolder = folderName;
-            document.getElementById('current-folder').textContent = folderName;
-
-            fetch(`/folders/${folderName}/files`)
-            .then(response => response.json())
-            .then(files => {
-                const fileList = document.getElementById('file-list');
-                fileList.innerHTML = '';
-
-                files.forEach(file => {
-                    const fileDiv = document.createElement('div');
-                    fileDiv.className = 'file';
-                    fileDiv.innerHTML = `
-                        <span>${file.name}</span>
-                        <button onclick="downloadFile('${file.name}')">Download</button>
-                        <button onclick="deleteFile('${file.name}')">Delete</button>
-                    `;
-                    fileList.appendChild(fileDiv);
-                });
-            });
-
+            const url = new URL(window.location);
+            url.searchParams.set('folder', folderName);
+            window.history.pushState({}, '', url);
             document.getElementById('main-view').style.display = 'none';
             document.getElementById('folder-view').style.display = 'block';
+            document.getElementById('current-folder').textContent = folderName;
+            displayFiles(folderName);
+        }
+
+        function goBack() {
+            const url = new URL(window.location);
+            url.searchParams.delete('folder');
+            window.history.pushState({}, '', url);
+            document.getElementById('folder-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'block';
+        }
+
+        function displayFiles(folderName) {
+            fetch(`/folders/${folderName}/files`)
+                .then(response => response.json())
+                .then(data => {
+                    const fileList = document.getElementById('file-list');
+                    fileList.innerHTML = '';
+
+                    data.files.forEach(file => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'file';
+                        fileDiv.innerHTML = `
+                            <span>${file}</span>
+                            <button onclick="downloadFile('${folderName}', '${file}')">Download</button>
+                            <button onclick="deleteFile('${folderName}', '${file}')">Delete</button>
+                        `;
+                        fileList.appendChild(fileDiv);
+                    });
+                });
         }
 
         function uploadFile() {
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
 
-            if (!file) {
-                alert('No file selected');
+            if (!file || !currentFolder) {
+                alert('No file selected or no folder open');
                 return;
             }
 
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('folder', currentFolder);
 
-            fetch('/folders/upload', {
+            fetch(`/folders/${currentFolder}/files`, {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    loadFiles(currentFolder);
+                    displayFiles(currentFolder);
                     fileInput.value = '';
                 } else {
                     alert(data.message);
@@ -354,20 +327,18 @@
             });
         }
 
-        function downloadFile(fileName) {
-            window.location.href = `/folders/${currentFolder}/files/${fileName}`;
+        function downloadFile(folderName, fileName) {
+            window.location.href = `/folders/${folderName}/files/${fileName}`;
         }
 
-        function deleteFile(fileName) {
-            fetch(`/folders/${currentFolder}/files/delete`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: fileName })
+        function deleteFile(folderName, fileName) {
+            fetch(`/folders/${folderName}/files/${fileName}`, {
+                method: 'DELETE'
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    loadFiles(currentFolder);
+                    displayFiles(folderName);
                 } else {
                     alert(data.message);
                 }
@@ -379,13 +350,14 @@
             menu.classList.toggle('show');
         }
 
-        function goBack() {
-            document.getElementById('main-view').style.display = 'block';
-            document.getElementById('folder-view').style.display = 'none';
+        window.onload = () => {
+            loadFolders();
+            const urlParams = new URLSearchParams(window.location.search);
+            const folder = urlParams.get('folder');
+            if (folder) {
+                openFolder(folder);
+            }
         }
-
-        // Initial load
-        loadFolders();
     </script>
 </body>
 </html>
