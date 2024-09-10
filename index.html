@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Manager with LocalStorage</title>
+    <title>File Manager</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -186,11 +186,6 @@
         let actionType = '';
         let currentFolder = '';
 
-        function getQueryParam(name) {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(name);
-        }
-
         function createFolder() {
             const folderName = document.getElementById('folder-name').value;
             const folderPassword = document.getElementById('folder-password').value;
@@ -200,39 +195,40 @@
                 return;
             }
 
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            if (folders[folderName]) {
-                alert('Folder already exists');
-                return;
-            }
-
-            folders[folderName] = {
-                name: folderName,
-                password: folderPassword || null,
-                files: []
-            };
-
-            localStorage.setItem('folders', JSON.stringify(folders));
-            document.getElementById('folder-name').value = '';
-            document.getElementById('folder-password').value = '';
-
-            loadFolders();
+            fetch('/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: folderName, password: folderPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFolders();
+                    document.getElementById('folder-name').value = '';
+                    document.getElementById('folder-password').value = '';
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
         function loadFolders() {
-            const folderList = document.getElementById('folder-list');
-            folderList.innerHTML = '';
+            fetch('/folders')
+            .then(response => response.json())
+            .then(folders => {
+                const folderList = document.getElementById('folder-list');
+                folderList.innerHTML = '';
 
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            for (const [key, folder] of Object.entries(folders)) {
-                const folderDiv = document.createElement('div');
-                folderDiv.className = 'folder';
-                folderDiv.innerHTML = `
-                    <span>${folder.name}</span>
-                    <button onclick="openFolder('${folder.name}')">Open</button>
-                `;
-                folderList.appendChild(folderDiv);
-            }
+                folders.forEach(folder => {
+                    const folderDiv = document.createElement('div');
+                    folderDiv.className = 'folder';
+                    folderDiv.innerHTML = `
+                        <span>${folder.name}</span>
+                        <button onclick="openFolder('${folder.name}')">Open</button>
+                    `;
+                    folderList.appendChild(folderDiv);
+                });
+            });
         }
 
         function showPasswordPopup(type) {
@@ -243,33 +239,28 @@
         function handlePasswordAction() {
             const folderName = document.getElementById('folder-name-input').value;
             const password = document.getElementById('password-input').value;
-            const folders = JSON.parse(localStorage.getItem('folders')) || {};
-            const folder = folders[folderName];
 
-            if (!folder) {
-                alert('Folder not found');
-                return;
-            }
-
-            if (folder.password && password !== folder.password) {
-                alert('Incorrect password');
-                return;
-            }
-
-            if (actionType === 'delete') {
-                if (confirm(`Are you sure you want to delete folder ${folderName}?`)) {
-                    deleteFolder(folderName);
+            fetch('/folders/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: folderName, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    if (actionType === 'delete') {
+                        deleteFolder(folderName);
+                    } else if (actionType === 'rename') {
+                        const newName = prompt('Enter new folder name:', folderName);
+                        if (newName) {
+                            renameFolder(folderName, newName);
+                        }
+                    }
+                    closePasswordPopup();
+                } else {
+                    alert('Incorrect password or folder not found');
                 }
-            } else if (actionType === 'rename') {
-                const newName = prompt('Enter new folder name:', folderName);
-                if (newName && !folders[newName]) {
-                    renameFolder(folderName, newName);
-                } else if (folders[newName]) {
-                    alert('Folder with this name already exists');
-                }
-            }
-
-            closePasswordPopup();
+            });
         }
 
         function closePasswordPopup() {
@@ -277,101 +268,110 @@
         }
 
         function renameFolder(oldName, newName) {
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            folders[newName] = folders[oldName];
-            delete folders[oldName];
-            localStorage.setItem('folders', JSON.stringify(folders));
-            loadFolders();
+            fetch('/folders/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldName, newName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFolders();
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
         function deleteFolder(folderName) {
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            delete folders[folderName];
-            localStorage.setItem('folders', JSON.stringify(folders));
-            loadFolders();
-            goBack();
+            fetch('/folders/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: folderName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFolders();
+                    goBack();
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
         function openFolder(folderName) {
-            const url = new URL(window.location);
-            url.searchParams.set('folder', folderName);
-            window.history.pushState({}, '', url);
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('folder-view').style.display = 'block';
+            currentFolder = folderName;
             document.getElementById('current-folder').textContent = folderName;
-            displayFiles(folderName);
-        }
 
-        function goBack() {
-            const url = new URL(window.location);
-            url.searchParams.delete('folder');
-            window.history.pushState({}, '', url);
-            document.getElementById('folder-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'block';
-        }
+            fetch(`/folders/${folderName}/files`)
+            .then(response => response.json())
+            .then(files => {
+                const fileList = document.getElementById('file-list');
+                fileList.innerHTML = '';
 
-        function displayFiles(folderName) {
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
-
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            let folder = folders[folderName];
-            if (folder) {
-                folder.files.forEach(file => {
+                files.forEach(file => {
                     const fileDiv = document.createElement('div');
                     fileDiv.className = 'file';
                     fileDiv.innerHTML = `
-                        <span>${file}</span>
-                        <button onclick="downloadFile('${folderName}', '${file}')">Download</button>
-                        <button onclick="deleteFile('${folderName}', '${file}')">Delete</button>
+                        <span>${file.name}</span>
+                        <button onclick="downloadFile('${file.name}')">Download</button>
+                        <button onclick="deleteFile('${file.name}')">Delete</button>
                     `;
                     fileList.appendChild(fileDiv);
                 });
-            }
+            });
+
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('folder-view').style.display = 'block';
         }
 
         function uploadFile() {
             const fileInput = document.getElementById('file-input');
-            const folderName = getQueryParam('folder');
-            if (!folderName) {
-                alert('Select a folder first');
-                return;
-            }
-
             const file = fileInput.files[0];
+
             if (!file) {
-                alert('Select a file first');
+                alert('No file selected');
                 return;
             }
 
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            let folder = folders[folderName];
-            if (folder) {
-                folder.files.push(file.name);
-                localStorage.setItem('folders', JSON.stringify(folders));
-                displayFiles(folderName);
-                fileInput.value = '';
-            }
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', currentFolder);
+
+            fetch('/folders/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFiles(currentFolder);
+                    fileInput.value = '';
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
-        function deleteFile(folderName, fileName) {
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
-            let folder = folders[folderName];
-            if (folder) {
-                folder.files = folder.files.filter(file => file !== fileName);
-                localStorage.setItem('folders', JSON.stringify(folders));
-                displayFiles(folderName);
-            }
+        function downloadFile(fileName) {
+            window.location.href = `/folders/${currentFolder}/files/${fileName}`;
         }
 
-        function downloadFile(folderName, fileName) {
-            const fileContent = new Blob(["Sample file content"], { type: "text/plain" });
-            const url = URL.createObjectURL(fileContent);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
+        function deleteFile(fileName) {
+            fetch(`/folders/${currentFolder}/files/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: fileName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadFiles(currentFolder);
+                } else {
+                    alert(data.message);
+                }
+            });
         }
 
         function toggleMenu() {
@@ -379,17 +379,13 @@
             menu.classList.toggle('show');
         }
 
-        window.onload = function() {
-            const folderName = getQueryParam('folder');
-            if (folderName) {
-                document.getElementById('main-view').style.display = 'none';
-                document.getElementById('folder-view').style.display = 'block';
-                document.getElementById('current-folder').textContent = folderName;
-                displayFiles(folderName);
-            } else {
-                loadFolders();
-            }
-        };
+        function goBack() {
+            document.getElementById('main-view').style.display = 'block';
+            document.getElementById('folder-view').style.display = 'none';
+        }
+
+        // Initial load
+        loadFolders();
     </script>
 </body>
 </html>
