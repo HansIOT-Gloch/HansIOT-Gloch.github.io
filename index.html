@@ -3,304 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal XII TJKT</title>
+    <title>Local Storage File Manager</title>
     <style>
-        /* Style dasar untuk tampilan */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
         }
-        .container {
-            width: 80%;
-            margin: auto;
+        #file-list, #folder-list {
+            margin: 20px 0;
         }
-        h1 {
-            text-align: center;
-        }
-        .day-buttons button {
-            margin: 5px;
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .schedule-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        .schedule-table th, .schedule-table td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-        .week-schedule {
-            display: none;
-        }
-        .countdown-timer {
-            text-align: center;
-            font-size: 20px;
-            margin-top: 10px;
-        }
-        .note-container {
-            margin-top: 20px;
-        }
-        .note-container textarea {
-            width: 100%;
-            height: 100px;
-            margin-top: 10px;
-            padding: 10px;
-        }
-        .save-note-btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-            width: 100%;
+        .folder {
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div id="clock"></div> <!-- Digital clock for WIB time -->
-    <audio id="notification-sound" src="notification.mp3" preload="auto"></audio> <!-- Notifikasi Audio -->
+    <h1>File Manager with LocalStorage</h1>
 
-    <div class="container">
-        <h1>Jadwal XII TJKT</h1>
+    <input type="text" id="folder-name" placeholder="Folder Name">
+    <input type="password" id="folder-password" placeholder="Password (optional)">
+    <button onclick="createFolder()">Create Folder</button>
 
-        <div class="day-buttons">
-            <button onclick="showSchedule('monday')">Senin</button>
-            <button onclick="showSchedule('tuesday')">Selasa</button>
-            <button onclick="showSchedule('wednesday')">Rabu</button>
-            <button onclick="showSchedule('thursday')">Kamis</button>
-            <button onclick="showSchedule('friday')">Jumat</button>
-            <button onclick="showTodaySchedule()">Jadwal Hari Ini</button>
-            <button onclick="toggleWeekSchedule()">Tampilkan Jadwal Minggu Ini</button>
-            <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
-        </div>
+    <h2>Folders</h2>
+    <div id="folder-list"></div>
 
-        <table class="schedule-table" id="schedule">
-            <!-- Jadwal akan dimuat di sini -->
-        </table>
+    <h2>Upload File</h2>
+    <input type="file" id="file-input">
+    <button onclick="uploadFile()">Upload File</button>
 
-        <div id="ongoing-class"></div>
-        <div id="countdown-timer" class="countdown-timer"></div> <!-- Penghitung Waktu Mundur -->
-
-        <div class="running-text">
-            <span id="runningText">Memuat informasi...</span>
-        </div>
-
-        <!-- Jadwal Mingguan -->
-        <div id="week-schedule" class="week-schedule">
-            <h2>Jadwal Mingguan</h2>
-            <table class="schedule-table">
-                <!-- Tabel yang berisi seluruh jadwal dalam seminggu -->
-                <tbody id="week-schedule-body">
-                    <!-- Jadwal minggu ini akan diisi di sini -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Fitur Catatan -->
-        <div class="note-container">
-            <h3>Catatan Pelajaran</h3>
-            <textarea id="notes" placeholder="Tambahkan catatan untuk pelajaran ini..."></textarea>
-            <button class="save-note-btn" onclick="saveNote()">Simpan Catatan</button>
-        </div>
-    </div>
+    <h2>Files</h2>
+    <div id="file-list"></div>
 
     <script>
-        const schedule = {
-            "monday": [
-                { "time": "7:10 - 9:10", "subject": "Matematika", "teacher": "Nita Rusdianita, S.Pd" },
-                { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
-                { "time": "9:30 - 10:40", "subject": "Pendidikan Pancasila", "teacher": "Sugiono, S.Pd" },
-                { "time": "10:40 - 11:50", "subject": "Teknologi Jaringan Kabel", "teacher": "Indra Gunawan, S.Kom" },
-                { "time": "11:50 - 12:10", "subject": "Istirahat", "teacher": "" },
-                { "time": "12:10 - 13:20", "subject": "Bimbingan Konseling", "teacher": "Winarsih, S.Pd, MM" },
-                { "time": "13:20 - 14:30", "subject": "Pendidikan Agama", "teacher": "C / T / S / K" }
-            ],
-            "tuesday": [
-                { "time": "7:10 - 8:30", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
-                { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
-                { "time": "9:30 - 10:40", "subject": "Bahasa Indonesia", "teacher": "Setyorini P, M.Pd" },
-                { "time": "10:40 - 12:45", "subject": "Pemasangan Perangkat", "teacher": "Encep Andi, S.T" },
-                { "time": "12:45 - 14:30", "subject": "Teknologi Jaringan Kabel Dan Nirkabel", "teacher": "Indra Gunawan, S.Kom" }
-            ],
-            "wednesday": [
-                { "time": "7:10 - 9:10", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
-                { "time": "9:10 - 9:30", "subject": "Istirahat", "teacher": "" },
-                { "time": "9:30 - 10:40", "subject": "Bahasa Inggris", "teacher": "Donna Morfini, S.Pd, M.Ikom" },
-                { "time": "10:40 - 12:45", "subject": "Administrasi Sistem Jaringan", "teacher": "Encep Andi, S.T" },
-                { "time": "12:45 - 14:30", "subject": "Keamanan Jaringan", "teacher": "Encep Andi, S.T" }
-            ],
-            "thursday": [
-                { "time": "7:10 - 8:30", "subject": "Kewirausahaan", "teacher": "Danwayanah, S.S" },
-                { "time": "8:30 - 10:40", "subject": "Konfigurasi Perangkat", "teacher": "Encep Andi, S.T" },
-                { "time": "10:40 - 12:45", "subject": "Sistem Jaringan", "teacher": "Encep Andi, S.T" },
-                { "time": "12:45 - 13:55", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
-                { "time": "13:55 - 14:30", "subject": "Budi Pekerti", "teacher": "Winarsih S.pd MM" }
-            ],
-            "friday": [
-                { "time": "7:10 - 8:30", "subject": "Perencanaan Jaringan", "teacher": "Encep Andi, S.T" },
-                { "time": "8:30 - 9:30", "subject": "Istirahat", "teacher": "" },
-                { "time": "9:30 - 10:50", "subject": "Bahasa Mandarin", "teacher": "Loose Nicholas" }
-            ]
-        };
+        // Load folders from localStorage
+        document.addEventListener('DOMContentLoaded', loadFolders);
 
-        function showSchedule(day) {
-            const scheduleTable = document.getElementById("schedule");
-            scheduleTable.innerHTML = ""; // Hapus isi tabel sebelumnya
-            if (schedule[day]) {
-                schedule[day].forEach((item, index) => {
-                    const row = scheduleTable.insertRow(index);
-                    const timeCell = row.insertCell(0);
-                    const subjectCell = row.insertCell(1);
-                    const teacherCell = row.insertCell(2);
+        function createFolder() {
+            const folderName = document.getElementById('folder-name').value;
+            const folderPassword = document.getElementById('folder-password').value;
 
-                    timeCell.innerText = item.time;
-                    subjectCell.innerText = item.subject;
-                    teacherCell.innerText = item.teacher;
-                });
+            if (!folderName) {
+                alert('Folder name is required');
+                return;
+            }
+
+            const folder = {
+                name: folderName,
+                password: folderPassword || null,
+                files: []
+            };
+
+            localStorage.setItem(folderName, JSON.stringify(folder));
+            document.getElementById('folder-name').value = '';
+            document.getElementById('folder-password').value = '';
+
+            loadFolders();
+        }
+
+        function loadFolders() {
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = '';
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const folder = JSON.parse(localStorage.getItem(key));
+
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'folder';
+                folderDiv.innerHTML = `
+                    <strong>Folder: ${folder.name}</strong>
+                    <button onclick="renameFolder('${folder.name}')">Rename</button>
+                    <button onclick="deleteFolder('${folder.name}')">Delete</button>
+                    <button onclick="openFolder('${folder.name}')">Open</button>
+                `;
+                folderList.appendChild(folderDiv);
             }
         }
 
-        function showTodaySchedule() {
-            const today = new Date().getDay();
-            const days = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-            if (today >= 1 && today <= 5) {
-                showSchedule(days[today - 1]);
-            } else {
-                document.getElementById("schedule").innerHTML = "<tr><td colspan='3'>Tidak ada jadwal untuk hari ini.</td></tr>";
+        function renameFolder(oldName) {
+            const newName = prompt('Enter new folder name:', oldName);
+
+            if (!newName) return;
+
+            const folder = JSON.parse(localStorage.getItem(oldName));
+            localStorage.removeItem(oldName);
+            folder.name = newName;
+            localStorage.setItem(newName, JSON.stringify(folder));
+            loadFolders();
+        }
+
+        function deleteFolder(folderName) {
+            if (confirm(`Are you sure you want to delete folder ${folderName}?`)) {
+                localStorage.removeItem(folderName);
+                loadFolders();
             }
         }
 
-        function toggleWeekSchedule() {
-            const weekSchedule = document.getElementById("week-schedule");
-            weekSchedule.style.display = weekSchedule.style.display === "none" ? "block" : "none";
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-        }
-
-        function saveNote() {
-            const notes = document.getElementById("notes").value;
-            localStorage.setItem("scheduleNotes", notes);
-            alert("Catatan berhasil disimpan.");
-        }
-
-        function loadNotes() {
-            const savedNotes = localStorage.getItem("scheduleNotes");
-            if (savedNotes) {
-                document.getElementById("notes").value = savedNotes;
-            }
-        }
-
-        // Digital clock
-        function startClock() {
-            const clock = document.getElementById("clock");
-            setInterval(() => {
-                const date = new Date();
-                clock.innerText = `Waktu WIB: ${date.toLocaleTimeString('id-ID')}`;
-            }, 1000);
-        }
-
-        // Countdown Timer untuk kelas
-        function startCountdown(targetTime) {
-            const countdown = document.getElementById("countdown-timer");
-            const interval = setInterval(() => {
-                const now = new Date().getTime();
-                const distance = targetTime - now;
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                countdown.innerText = `Waktu tersisa: ${hours}h ${minutes}m ${seconds}s`;
-
-                if (distance < 0) {
-                    clearInterval(interval);
-                    countdown.innerText = "Kelas telah dimulai!";
-                    playNotificationSound();
+        function openFolder(folderName) {
+            const folder = JSON.parse(localStorage.getItem(folderName));
+            if (folder.password) {
+                const enteredPassword = prompt('Enter folder password:');
+                if (enteredPassword !== folder.password) {
+                    alert('Incorrect password');
+                    return;
                 }
-            }, 1000);
-        }
-
-        // Notifikasi suara
-        function playNotificationSound() {
-            const notificationSound = document.getElementById("notification-sound");
-            notificationSound.play();
-        }
-
-        // Running text untuk update
-        function startRunningText() {
-    const runningText = document.getElementById("runningText");
-    let index = 0;
-    
-    // Dapatkan pelajaran selanjutnya berdasarkan jadwal hari ini
-    function getNextClassText() {
-        const now = new Date();
-        const dayOfWeek = now.getDay(); // 0 = Minggu, 1 = Senin, dst.
-        const dayMap = {1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday'};
-        const today = dayMap[dayOfWeek];
-        
-        if (!today || !schedule[today]) {
-            return "Tidak ada jadwal untuk hari ini.";
-        }
-
-        const currentTime = now.getHours() * 60 + now.getMinutes(); // Jam saat ini dalam menit
-        let nextClass = null;
-        let remainingTime = null;
-
-        // Loop melalui jadwal hari ini
-        for (let item of schedule[today]) {
-            const [startHour, startMinute] = item.time.split(" - ")[0].split(":").map(Number);
-            const startTimeInMinutes = startHour * 60 + startMinute;
-
-            if (startTimeInMinutes > currentTime) {
-                nextClass = item;
-                remainingTime = startTimeInMinutes - currentTime;
-                break;
             }
+            displayFiles(folderName);
         }
 
-        if (nextClass) {
-            const remainingHours = Math.floor(remainingTime / 60);
-            const remainingMinutes = remainingTime % 60;
-            const remainingText = remainingHours > 0 ? `${remainingHours} jam` : `${remainingMinutes} menit`;
-            return `Pelajaran selanjutnya yaitu ${nextClass.subject} dengan guru ${nextClass.teacher} dari jam ${nextClass.time}. Pelajaran akan dimulai dalam waktu ${remainingText}.`;
-        } else {
-            return "Tidak ada pelajaran lagi untuk hari ini.";
+        function displayFiles(folderName) {
+            const folder = JSON.parse(localStorage.getItem(folderName));
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+
+            folder.files.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.innerHTML = `
+                    File: ${file.name}
+                    <button onclick="downloadFile('${folderName}', ${index})">Download</button>
+                    <button onclick="deleteFile('${folderName}', ${index})">Delete</button>
+                `;
+                fileList.appendChild(fileDiv);
+            });
         }
-    }
 
-    // Daftar teks berjalan, termasuk pelajaran selanjutnya
-    function getRunningTexts() {
-        const nextClassText = getNextClassText();
-        return [
-            "Selamat belajar!",
-            "Periksa jadwal terbaru di sini.",
-            "Pastikan Anda sudah menyiapkan catatan!",
-            nextClassText
-        ];
-    }
+        function uploadFile() {
+            const fileInput = document.getElementById('file-input');
+            const folderName = prompt('Enter folder name to upload to:');
+            if (!fileInput.files.length || !folderName) {
+                alert('File and folder name are required');
+                return;
+            }
 
-    setInterval(() => {
-        const texts = getRunningTexts(); // Ambil teks dinamis terbaru setiap interval
-        runningText.innerText = texts[index];
-        index = (index + 1) % texts.length;
-    }, 3000);
- }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
 
-        // Mulai fitur-fitur pada saat halaman dimuat
-        window.onload = function() {
-            startClock();
-            startRunningText();
-            loadNotes();
-        };
+            reader.onload = function(e) {
+                const folder = JSON.parse(localStorage.getItem(folderName));
+                if (!folder) {
+                    alert('Folder not found');
+                    return;
+                }
+
+                const fileData = {
+                    name: file.name,
+                    content: e.target.result
+                };
+
+                folder.files.push(fileData);
+                localStorage.setItem(folderName, JSON.stringify(folder));
+                displayFiles(folderName);
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function downloadFile(folderName, fileIndex) {
+            const folder = JSON.parse(localStorage.getItem(folderName));
+            const file = folder.files[fileIndex];
+
+            const link = document.createElement('a');
+            link.href = file.content;
+            link.download = file.name;
+            link.click();
+        }
+
+        function deleteFile(folderName, fileIndex) {
+            const folder = JSON.parse(localStorage.getItem(folderName));
+            folder.files.splice(fileIndex, 1);
+            localStorage.setItem(folderName, JSON.stringify(folder));
+            displayFiles(folderName);
+        }
     </script>
 </body>
 </html>
