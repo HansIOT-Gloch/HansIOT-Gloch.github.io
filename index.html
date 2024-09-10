@@ -3,40 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Storage File Manager</title>
+    <title>File Manager with LocalStorage</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
         }
-        #file-list, #folder-list {
-            margin: 20px 0;
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .folder {
-            margin: 10px 0;
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin: 20px 0 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="file"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .file-list {
+            margin-top: 10px;
+        }
+
+        .file-list .folder {
+            background: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .file-list div {
+            margin-bottom: 5px;
+        }
+
+        .file-list button {
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>File Manager with LocalStorage</h1>
+    <div class="container">
+        <h1>File Manager</h1>
 
-    <input type="text" id="folder-name" placeholder="Folder Name">
-    <input type="password" id="folder-password" placeholder="Password (optional)">
-    <button onclick="createFolder()">Create Folder</button>
+        <div class="form-group">
+            <input type="text" id="folder-name" placeholder="Folder Name">
+            <input type="password" id="folder-password" placeholder="Password (optional)">
+            <button onclick="createFolder()">Create Folder</button>
+        </div>
 
-    <h2>Folders</h2>
-    <div id="folder-list"></div>
+        <h2>Folders</h2>
+        <div id="folder-list" class="file-list"></div>
 
-    <h2>Upload File</h2>
-    <input type="file" id="file-input">
-    <button onclick="uploadFile()">Upload File</button>
+        <h2>Upload File</h2>
+        <input type="file" id="file-input">
+        <button onclick="uploadFile()">Upload File</button>
 
-    <h2>Files</h2>
-    <div id="file-list"></div>
+        <h2>Files</h2>
+        <div id="file-list" class="file-list"></div>
+    </div>
 
     <script>
-        // Load folders from localStorage
-        document.addEventListener('DOMContentLoaded', loadFolders);
-
         function createFolder() {
             const folderName = document.getElementById('folder-name').value;
             const folderPassword = document.getElementById('folder-password').value;
@@ -46,13 +110,19 @@
                 return;
             }
 
-            const folder = {
+            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+            if (folders[folderName]) {
+                alert('Folder already exists');
+                return;
+            }
+
+            folders[folderName] = {
                 name: folderName,
                 password: folderPassword || null,
                 files: []
             };
 
-            localStorage.setItem(folderName, JSON.stringify(folder));
+            localStorage.setItem('folders', JSON.stringify(folders));
             document.getElementById('folder-name').value = '';
             document.getElementById('folder-password').value = '';
 
@@ -63,10 +133,8 @@
             const folderList = document.getElementById('folder-list');
             folderList.innerHTML = '';
 
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                const folder = JSON.parse(localStorage.getItem(key));
-
+            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+            for (const [key, folder] of Object.entries(folders)) {
                 const folderDiv = document.createElement('div');
                 folderDiv.className = 'folder';
                 folderDiv.innerHTML = `
@@ -81,25 +149,31 @@
 
         function renameFolder(oldName) {
             const newName = prompt('Enter new folder name:', oldName);
-
             if (!newName) return;
 
-            const folder = JSON.parse(localStorage.getItem(oldName));
-            localStorage.removeItem(oldName);
-            folder.name = newName;
-            localStorage.setItem(newName, JSON.stringify(folder));
+            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+            if (folders[newName]) {
+                alert('Folder with this name already exists');
+                return;
+            }
+
+            folders[newName] = folders[oldName];
+            delete folders[oldName];
+            localStorage.setItem('folders', JSON.stringify(folders));
             loadFolders();
         }
 
         function deleteFolder(folderName) {
             if (confirm(`Are you sure you want to delete folder ${folderName}?`)) {
-                localStorage.removeItem(folderName);
+                let folders = JSON.parse(localStorage.getItem('folders')) || {};
+                delete folders[folderName];
+                localStorage.setItem('folders', JSON.stringify(folders));
                 loadFolders();
             }
         }
 
         function openFolder(folderName) {
-            const folder = JSON.parse(localStorage.getItem(folderName));
+            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
             if (folder.password) {
                 const enteredPassword = prompt('Enter folder password:');
                 if (enteredPassword !== folder.password) {
@@ -111,7 +185,7 @@
         }
 
         function displayFiles(folderName) {
-            const folder = JSON.parse(localStorage.getItem(folderName));
+            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
 
@@ -138,7 +212,8 @@
             const reader = new FileReader();
 
             reader.onload = function(e) {
-                const folder = JSON.parse(localStorage.getItem(folderName));
+                let folders = JSON.parse(localStorage.getItem('folders')) || {};
+                const folder = folders[folderName];
                 if (!folder) {
                     alert('Folder not found');
                     return;
@@ -150,7 +225,7 @@
                 };
 
                 folder.files.push(fileData);
-                localStorage.setItem(folderName, JSON.stringify(folder));
+                localStorage.setItem('folders', JSON.stringify(folders));
                 displayFiles(folderName);
             };
 
@@ -158,7 +233,7 @@
         }
 
         function downloadFile(folderName, fileIndex) {
-            const folder = JSON.parse(localStorage.getItem(folderName));
+            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
             const file = folder.files[fileIndex];
 
             const link = document.createElement('a');
@@ -168,11 +243,15 @@
         }
 
         function deleteFile(folderName, fileIndex) {
-            const folder = JSON.parse(localStorage.getItem(folderName));
+            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+            const folder = folders[folderName];
             folder.files.splice(fileIndex, 1);
-            localStorage.setItem(folderName, JSON.stringify(folder));
+            localStorage.setItem('folders', JSON.stringify(folders));
             displayFiles(folderName);
         }
+
+        // Update folders every second
+        setInterval(loadFolders, 1000);
     </script>
 </body>
 </html>
