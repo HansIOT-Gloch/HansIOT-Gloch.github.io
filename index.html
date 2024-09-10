@@ -13,7 +13,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background: #fff;
@@ -74,11 +74,81 @@
         .file-list .folder:hover, .file-list .file:hover {
             background: #ddd;
         }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .toolbar button {
+            margin-right: 10px;
+        }
+
+        .hidden-menu {
+            display: none;
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            right: 10px;
+            top: 50px;
+            z-index: 10;
+        }
+
+        .hidden-menu.show {
+            display: block;
+        }
+
+        .hidden-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .hidden-menu button:hover {
+            background: #e9ecef;
+        }
+
+        .password-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .password-popup-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .password-popup-content input {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>File Manager</h1>
+        <div class="toolbar">
+            <button onclick="toggleMenu()">Menu</button>
+            <div id="hidden-menu" class="hidden-menu">
+                <button onclick="showPasswordPopup('delete')">Delete Folder</button>
+                <button onclick="goBack()">Back to Main View</button>
+            </div>
+        </div>
         <div id="main-view">
             <div class="form-group">
                 <input type="text" id="folder-name" placeholder="Folder Name">
@@ -94,11 +164,20 @@
         <div id="folder-view" style="display: none;">
             <h2>Files in <span id="current-folder"></span></h2>
             <div id="file-list" class="file-list"></div>
-            <button onclick="goBack()">Back to Main View</button>
+        </div>
+    </div>
+
+    <div id="password-popup" class="password-popup">
+        <div class="password-popup-content">
+            <input type="password" id="password-input" placeholder="Enter password">
+            <button onclick="handlePasswordAction()">Submit</button>
+            <button onclick="closePasswordPopup()">Cancel</button>
         </div>
     </div>
 
     <script>
+        let actionType = '';
+
         function getQueryParam(name) {
             const params = new URLSearchParams(window.location.search);
             return params.get(name);
@@ -143,17 +222,54 @@
                 folderDiv.innerHTML = `
                     <span>${folder.name}</span>
                     <button onclick="openFolder('${folder.name}')">Open</button>
-                    <button onclick="renameFolder('${folder.name}')">Rename</button>
-                    <button onclick="deleteFolder('${folder.name}')">Delete</button>
+                    <button onclick="showPasswordPopup('rename', '${folder.name}')">Rename</button>
+                    <button onclick="showPasswordPopup('delete', '${folder.name}')">Delete</button>
                 `;
                 folderList.appendChild(folderDiv);
             }
         }
 
-        function renameFolder(oldName) {
-            const newName = prompt('Enter new folder name:', oldName);
-            if (!newName) return;
+        function showPasswordPopup(type, folderName = '') {
+            actionType = type;
+            document.getElementById('password-popup').style.display = 'flex';
+            if (folderName) {
+                document.getElementById('password-input').dataset.folder = folderName;
+            }
+        }
 
+        function handlePasswordAction() {
+            const password = document.getElementById('password-input').value;
+            const folderName = document.getElementById('password-input').dataset.folder;
+            const folders = JSON.parse(localStorage.getItem('folders')) || {};
+            const folder = folders[folderName];
+
+            if (actionType === 'delete') {
+                if (folder && folder.password && password !== folder.password) {
+                    alert('Incorrect password');
+                    return;
+                }
+                if (confirm(`Are you sure you want to delete folder ${folderName}?`)) {
+                    deleteFolder(folderName);
+                }
+            } else if (actionType === 'rename') {
+                if (folder && folder.password && password !== folder.password) {
+                    alert('Incorrect password');
+                    return;
+                }
+                const newName = prompt('Enter new folder name:', folderName);
+                if (newName) {
+                    renameFolder(folderName, newName);
+                }
+            }
+
+            closePasswordPopup();
+        }
+
+        function closePasswordPopup() {
+            document.getElementById('password-popup').style.display = 'none';
+        }
+
+        function renameFolder(oldName, newName) {
             let folders = JSON.parse(localStorage.getItem('folders')) || {};
             if (folders[newName]) {
                 alert('Folder with this name already exists');
@@ -167,56 +283,38 @@
         }
 
         function deleteFolder(folderName) {
-            if (confirm(`Are you sure you want to delete folder ${folderName}?`)) {
-                let folders = JSON.parse(localStorage.getItem('folders')) || {};
-                delete folders[folderName];
-                localStorage.setItem('folders', JSON.stringify(folders));
-                loadFolders();
-            }
+            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+            delete folders[folderName];
+            localStorage.setItem('folders', JSON.stringify(folders));
+            loadFolders();
         }
 
         function openFolder(folderName) {
-            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
-            if (folder.password) {
-                const enteredPassword = prompt('Enter folder password:');
-                if (enteredPassword !== folder.password) {
-                    alert('Incorrect password');
-                    return;
-                }
-            }
-
-            // Update URL with folder name
-            window.history.pushState({}, '', `?folder=${encodeURIComponent(folderName)}`);
-
-            // Hide main view and show folder view
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('folder-view').style.display = 'block';
-            document.getElementById('current-folder').textContent = folderName;
-
-            displayFiles(folderName);
+            const params = new URLSearchParams(window.location.search);
+            params.set('folder', folderName);
+            window.location.search = params.toString();
         }
 
         function goBack() {
-            // Update URL to main view
-            window.history.pushState({}, '', `?`);
-
-            // Show main view and hide folder view
-            document.getElementById('main-view').style.display = 'block';
-            document.getElementById('folder-view').style.display = 'none';
+            const params = new URLSearchParams(window.location.search);
+            params.delete('folder');
+            window.location.search = params.toString();
         }
 
         function displayFiles(folderName) {
-            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
 
-            folder.files.forEach((file, index) => {
+            const folders = JSON.parse(localStorage.getItem('folders')) || {};
+            const folder = folders[folderName] || { files: [] };
+
+            folder.files.forEach(file => {
                 const fileDiv = document.createElement('div');
                 fileDiv.className = 'file';
                 fileDiv.innerHTML = `
-                    <span>${file.name}</span>
-                    <button onclick="downloadFile('${folderName}', ${index})">Download</button>
-                    <button onclick="deleteFile('${folderName}', ${index})">Delete</button>
+                    <span>${file}</span>
+                    <button onclick="downloadFile('${folderName}', '${file}')">Download</button>
+                    <button onclick="deleteFile('${folderName}', '${file}')">Delete</button>
                 `;
                 fileList.appendChild(fileDiv);
             });
@@ -224,56 +322,53 @@
 
         function uploadFile() {
             const fileInput = document.getElementById('file-input');
+            const files = fileInput.files;
             const folderName = getQueryParam('folder');
-            if (!fileInput.files.length || !folderName) {
-                alert('File and folder name are required');
+
+            if (files.length === 0 || !folderName) {
+                alert('Please select a file and open a folder first');
                 return;
             }
 
-            const file = fileInput.files[0];
+            const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
+            if (!folder) {
+                alert('Folder not found');
+                return;
+            }
+
+            const file = files[0].name;
             const reader = new FileReader();
-
-            reader.onload = function(e) {
-                let folders = JSON.parse(localStorage.getItem('folders')) || {};
-                const folder = folders[folderName];
-                if (!folder) {
-                    alert('Folder not found');
-                    return;
-                }
-
-                const fileData = {
-                    name: file.name,
-                    content: e.target.result
-                };
-
-                folder.files.push(fileData);
-                localStorage.setItem('folders', JSON.stringify(folders));
+            reader.onload = function() {
+                folder.files = folder.files || [];
+                folder.files.push(file);
+                localStorage.setItem('folders', JSON.stringify({ ...JSON.parse(localStorage.getItem('folders')), [folderName]: folder }));
                 displayFiles(folderName);
             };
-
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(files[0]);
         }
 
-        function downloadFile(folderName, fileIndex) {
+        function downloadFile(folderName, fileName) {
             const folder = JSON.parse(localStorage.getItem('folders'))[folderName];
-            const file = folder.files[fileIndex];
-
-            const link = document.createElement('a');
-            link.href = file.content;
-            link.download = file.name;
-            link.click();
+            if (!folder || !folder.files.includes(fileName)) {
+                alert('File not found');
+                return;
+            }
+            // Simulating download action - in a real case, you might use Blob
+            alert(`Downloading ${fileName}`);
         }
 
-        function deleteFile(folderName, fileIndex) {
-            let folders = JSON.parse(localStorage.getItem('folders')) || {};
+        function deleteFile(folderName, fileName) {
+            const folders = JSON.parse(localStorage.getItem('folders')) || {};
             const folder = folders[folderName];
-            folder.files.splice(fileIndex, 1);
-            localStorage.setItem('folders', JSON.stringify(folders));
-            displayFiles(folderName);
+
+            if (folder) {
+                folder.files = folder.files.filter(file => file !== fileName);
+                localStorage.setItem('folders', JSON.stringify(folders));
+                displayFiles(folderName);
+            }
         }
 
-        // Initial load
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', () => {
             const folderName = getQueryParam('folder');
             if (folderName) {
                 document.getElementById('main-view').style.display = 'none';
@@ -283,7 +378,12 @@
             } else {
                 loadFolders();
             }
-        };
+        });
+
+        function toggleMenu() {
+            const menu = document.getElementById('hidden-menu');
+            menu.classList.toggle('show');
+        }
     </script>
 </body>
 </html>
