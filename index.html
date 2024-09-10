@@ -21,14 +21,8 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
-        h1 {
-            font-size: 24px;
+        h1, h2 {
             margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 20px;
-            margin: 20px 0 10px;
         }
 
         .form-group {
@@ -63,44 +57,53 @@
             margin-top: 10px;
         }
 
-        .file-list .folder {
+        .file-list .folder, .file-list .file {
             background: #e9ecef;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 4px;
-        }
-
-        .file-list div {
-            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .file-list button {
             margin-left: 10px;
+        }
+
+        .file-list .folder:hover, .file-list .file:hover {
+            background: #ddd;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>File Manager</h1>
-
-        <div class="form-group">
-            <input type="text" id="folder-name" placeholder="Folder Name">
-            <input type="password" id="folder-password" placeholder="Password (optional)">
-            <button onclick="createFolder()">Create Folder</button>
+        <div id="main-view">
+            <div class="form-group">
+                <input type="text" id="folder-name" placeholder="Folder Name">
+                <input type="password" id="folder-password" placeholder="Password (optional)">
+                <button onclick="createFolder()">Create Folder</button>
+            </div>
+            <h2>Folders</h2>
+            <div id="folder-list" class="file-list"></div>
+            <h2>Upload File</h2>
+            <input type="file" id="file-input">
+            <button onclick="uploadFile()">Upload File</button>
         </div>
-
-        <h2>Folders</h2>
-        <div id="folder-list" class="file-list"></div>
-
-        <h2>Upload File</h2>
-        <input type="file" id="file-input">
-        <button onclick="uploadFile()">Upload File</button>
-
-        <h2>Files</h2>
-        <div id="file-list" class="file-list"></div>
+        <div id="folder-view" style="display: none;">
+            <h2>Files in <span id="current-folder"></span></h2>
+            <div id="file-list" class="file-list"></div>
+            <button onclick="goBack()">Back to Main View</button>
+        </div>
     </div>
 
     <script>
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
         function createFolder() {
             const folderName = document.getElementById('folder-name').value;
             const folderPassword = document.getElementById('folder-password').value;
@@ -138,10 +141,10 @@
                 const folderDiv = document.createElement('div');
                 folderDiv.className = 'folder';
                 folderDiv.innerHTML = `
-                    <strong>Folder: ${folder.name}</strong>
+                    <span>${folder.name}</span>
+                    <button onclick="openFolder('${folder.name}')">Open</button>
                     <button onclick="renameFolder('${folder.name}')">Rename</button>
                     <button onclick="deleteFolder('${folder.name}')">Delete</button>
-                    <button onclick="openFolder('${folder.name}')">Open</button>
                 `;
                 folderList.appendChild(folderDiv);
             }
@@ -181,7 +184,25 @@
                     return;
                 }
             }
+
+            // Update URL with folder name
+            window.history.pushState({}, '', `?folder=${encodeURIComponent(folderName)}`);
+
+            // Hide main view and show folder view
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('folder-view').style.display = 'block';
+            document.getElementById('current-folder').textContent = folderName;
+
             displayFiles(folderName);
+        }
+
+        function goBack() {
+            // Update URL to main view
+            window.history.pushState({}, '', `?`);
+
+            // Show main view and hide folder view
+            document.getElementById('main-view').style.display = 'block';
+            document.getElementById('folder-view').style.display = 'none';
         }
 
         function displayFiles(folderName) {
@@ -191,8 +212,9 @@
 
             folder.files.forEach((file, index) => {
                 const fileDiv = document.createElement('div');
+                fileDiv.className = 'file';
                 fileDiv.innerHTML = `
-                    File: ${file.name}
+                    <span>${file.name}</span>
                     <button onclick="downloadFile('${folderName}', ${index})">Download</button>
                     <button onclick="deleteFile('${folderName}', ${index})">Delete</button>
                 `;
@@ -202,7 +224,7 @@
 
         function uploadFile() {
             const fileInput = document.getElementById('file-input');
-            const folderName = prompt('Enter folder name to upload to:');
+            const folderName = getQueryParam('folder');
             if (!fileInput.files.length || !folderName) {
                 alert('File and folder name are required');
                 return;
@@ -250,8 +272,18 @@
             displayFiles(folderName);
         }
 
-        // Update folders every second
-        setInterval(loadFolders, 1000);
+        // Initial load
+        window.onload = function() {
+            const folderName = getQueryParam('folder');
+            if (folderName) {
+                document.getElementById('main-view').style.display = 'none';
+                document.getElementById('folder-view').style.display = 'block';
+                document.getElementById('current-folder').textContent = folderName;
+                displayFiles(folderName);
+            } else {
+                loadFolders();
+            }
+        };
     </script>
 </body>
 </html>
