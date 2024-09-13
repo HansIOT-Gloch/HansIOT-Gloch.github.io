@@ -1,361 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Manager</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        h1, h2 {
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="file"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .file-list {
-            margin-top: 10px;
-        }
-
-        .file-list .folder, .file-list .file {
-            background: #e9ecef;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .file-list button {
-            margin-left: 10px;
-        }
-
-        .file-list .folder:hover, .file-list .file:hover {
-            background: #ddd;
-        }
-
-        .toolbar {
-            display: flex;
-            justify-content: flex-start;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .toolbar button {
-            margin-right: 10px;
-        }
-
-        .hidden-menu {
-            display: none;
-            position: absolute;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            right: 0;
-            top: 50px;
-            z-index: 10;
-        }
-
-        .hidden-menu.show {
-            display: block;
-        }
-
-        .hidden-menu button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background: #f8f9fa;
-            cursor: pointer;
-        }
-
-        .hidden-menu button:hover {
-            background: #e9ecef;
-        }
-
-        .password-popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .password-popup-content {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 300px;
-            text-align: center;
-        }
-
-        .password-popup-content input {
-            margin-bottom: 10px;
-        }
-
-        .toolbar .logo-button {
-            font-size: 1.2em;
-        }
-    </style>
+    <title>Translator Indonesia - China Sederhana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>File Manager</h1>
-        <div class="toolbar">
-            <button class="logo-button" onclick="toggleMenu()">☰ Menu</button>
-            <div id="hidden-menu" class="hidden-menu">
-                <button onclick="showPasswordPopup('delete')">Delete Folder</button>
-                <button onclick="showPasswordPopup('rename')">Rename Folder</button>
-                <button onclick="goBack()">Back to Main View</button>
-            </div>
-        </div>
-        <div id="main-view">
-            <div class="form-group">
-                <input type="text" id="folder-name" placeholder="Folder Name">
-                <input type="password" id="folder-password" placeholder="Password (optional)">
-                <button onclick="createFolder()">Create Folder</button>
-            </div>
-            <h2>Folders</h2>
-            <div id="folder-list" class="file-list"></div>
-        </div>
-        <div id="folder-view" style="display: none;">
-            <h2>Files in <span id="current-folder"></span></h2>
-            <div id="file-list" class="file-list"></div>
-            <h2>Upload File</h2>
-            <input type="file" id="file-input">
-            <button onclick="uploadFile()">Upload File</button>
-        </div>
-    </div>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-8">
+        <h1 class="text-2xl font-bold text-center mb-6">Penerjemah Bahasa</h1>
 
-    <div id="password-popup" class="password-popup">
-        <div class="password-popup-content">
-            <input type="text" id="folder-name-input" placeholder="Enter folder name">
-            <input type="password" id="password-input" placeholder="Enter password">
-            <button onclick="handlePasswordAction()">Submit</button>
-            <button onclick="closePasswordPopup()">Cancel</button>
+        <!-- Input Bahasa Indonesia -->
+        <div class="mb-4">
+            <label for="input-indonesia" class="block text-lg font-semibold mb-2">Masukkan Bahasa Indonesia</label>
+            <textarea id="input-indonesia" class="w-full border-2 border-gray-300 p-2 rounded-md" rows="4" placeholder="Masukkan teks Bahasa Indonesia"></textarea>
+        </div>
+
+        <!-- Tombol Translate -->
+        <div class="flex justify-center mb-6">
+            <button onclick="translateText()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">Terjemahkan</button>
+        </div>
+
+        <!-- Output Bahasa Inggris -->
+        <div class="mb-4">
+            <label for="output-english" class="block text-lg font-semibold mb-2">Bahasa Inggris</label>
+            <textarea id="output-english" class="w-full border-2 border-gray-300 p-2 rounded-md" rows="4" readonly></textarea>
+        </div>
+
+        <!-- Output China Sederhana -->
+        <div class="mb-4">
+            <label for="output-chinese" class="block text-lg font-semibold mb-2">Bahasa China Sederhana</label>
+            <textarea id="output-chinese" class="w-full border-2 border-gray-300 p-2 rounded-md" rows="4" readonly></textarea>
         </div>
     </div>
 
     <script>
-        let actionType = '';
-        let currentFolder = '';
+        // Fungsi untuk melakukan translate
+        async function translateText() {
+            const text = document.getElementById('input-indonesia').value;
 
-        function createFolder() {
-            const folderName = document.getElementById('folder-name').value;
-            const folderPassword = document.getElementById('folder-password').value;
-
-            if (!folderName) {
-                alert('Folder name is required');
+            // Check if input is empty
+            if (!text) {
+                alert("Masukkan teks dalam Bahasa Indonesia");
                 return;
             }
 
-            fetch('/folders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: folderName, password: folderPassword })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadFolders();
-                    document.getElementById('folder-name').value = '';
-                    document.getElementById('folder-password').value = '';
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
+            // Placeholder untuk API penerjemah (seperti Google Translate API)
+            // Misalnya, kita akan melakukan dua panggilan API: satu untuk Bahasa Inggris dan satu untuk China Sederhana.
 
-        function loadFolders() {
-            fetch('/folders')
-                .then(response => response.json())
-                .then(data => {
-                    const folderList = document.getElementById('folder-list');
-                    folderList.innerHTML = '';
+            // API Google Translate (anda memerlukan API Key untuk ini)
+            const translateAPI = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text);
 
-                    data.folders.forEach(folder => {
-                        const folderDiv = document.createElement('div');
-                        folderDiv.className = 'folder';
-                        folderDiv.innerHTML = `
-                            <span>${folder.name}</span>
-                            <button onclick="openFolder('${folder.name}')">Open</button>
-                        `;
-                        folderList.appendChild(folderDiv);
-                    });
-                });
-        }
+            try {
+                // Translate ke Bahasa Inggris
+                const englishResponse = await fetch(translateAPI + '&langpair=id|en');
+                const englishData = await englishResponse.json();
+                document.getElementById('output-english').value = englishData.responseData.translatedText;
 
-        function showPasswordPopup(type) {
-            actionType = type;
-            document.getElementById('password-popup').style.display = 'flex';
-        }
+                // Translate ke Bahasa China Sederhana
+                const chineseResponse = await fetch(translateAPI + '&langpair=id|zh-CN');
+                const chineseData = await chineseResponse.json();
+                document.getElementById('output-chinese').value = chineseData.responseData.translatedText;
 
-        function handlePasswordAction() {
-            const folderName = document.getElementById('folder-name-input').value;
-            const password = document.getElementById('password-input').value;
-
-            fetch('/folders', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: folderName, password: password, action: actionType })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadFolders();
-                    goBack();
-                } else {
-                    alert(data.message);
-                }
-            });
-
-            closePasswordPopup();
-        }
-
-        function closePasswordPopup() {
-            document.getElementById('password-popup').style.display = 'none';
-        }
-
-        function openFolder(folderName) {
-            const url = new URL(window.location);
-            url.searchParams.set('folder', folderName);
-            window.history.pushState({}, '', url);
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('folder-view').style.display = 'block';
-            document.getElementById('current-folder').textContent = folderName;
-            displayFiles(folderName);
-        }
-
-        function goBack() {
-            const url = new URL(window.location);
-            url.searchParams.delete('folder');
-            window.history.pushState({}, '', url);
-            document.getElementById('folder-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'block';
-        }
-
-        function displayFiles(folderName) {
-            fetch(`/folders/${folderName}/files`)
-                .then(response => response.json())
-                .then(data => {
-                    const fileList = document.getElementById('file-list');
-                    fileList.innerHTML = '';
-
-                    data.files.forEach(file => {
-                        const fileDiv = document.createElement('div');
-                        fileDiv.className = 'file';
-                        fileDiv.innerHTML = `
-                            <span>${file}</span>
-                            <button onclick="downloadFile('${folderName}', '${file}')">Download</button>
-                            <button onclick="deleteFile('${folderName}', '${file}')">Delete</button>
-                        `;
-                        fileList.appendChild(fileDiv);
-                    });
-                });
-        }
-
-        function uploadFile() {
-            const fileInput = document.getElementById('file-input');
-            const file = fileInput.files[0];
-
-            if (!file || !currentFolder) {
-                alert('No file selected or no folder open');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch(`/folders/${currentFolder}/files`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayFiles(currentFolder);
-                    fileInput.value = '';
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
-
-        function downloadFile(folderName, fileName) {
-            window.location.href = `/folders/${folderName}/files/${fileName}`;
-        }
-
-        function deleteFile(folderName, fileName) {
-            fetch(`/folders/${folderName}/files/${fileName}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayFiles(folderName);
-                } else {
-                    alert(data.message);
-                }
-            });
-        }
-
-        function toggleMenu() {
-            const menu = document.getElementById('hidden-menu');
-            menu.classList.toggle('show');
-        }
-
-        window.onload = () => {
-            loadFolders();
-            const urlParams = new URLSearchParams(window.location.search);
-            const folder = urlParams.get('folder');
-            if (folder) {
-                openFolder(folder);
+            } catch (error) {
+                console.error("Error during translation:", error);
+                alert("Gagal melakukan penerjemahan. Silakan coba lagi nanti.");
             }
         }
     </script>
